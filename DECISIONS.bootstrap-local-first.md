@@ -83,7 +83,7 @@ Context: indexation trop lente sur vault volumineux.
 Decision: encoder les chunks manquants en batch et persister le cache embeddings en une transaction.
 Rationale: réduire drastiquement le coût CPU/IO par chunk et rendre l'indexation initiale praticable.
 Task: T-009
-Commit: pending
+Commit: 5ebd2e3
 Impact: high, module
 Date: 2026-02-19
 
@@ -93,6 +93,16 @@ Context: bindings Tantivy installés sans `QueryParser`/`Term`, et collection Qd
 Decision: utiliser `Index.parse_query`, `delete_documents_by_term`, `index.reload()`, et un upsert Qdrant incrémental sans `recreate_collection`.
 Rationale: éviter les crashs, conserver les points existants et fiabiliser la présence d'objets côté Qdrant.
 Task: T-009
-Commit: pending
+Commit: 5ebd2e3
 Impact: high, module
+Date: 2026-02-19
+
+### [D-010] Embedding hash par défaut pour indexation rapide
+
+Context: indexation encore trop longue sur machine locale et grands vaults.
+Decision: rendre `vector.embedding_backend=hash` par défaut; `sentence-transformers` devient opt-in explicite.
+Rationale: supprimer le coût de chargement/inférence modèle par défaut et garder une expérience réactive.
+Task: T-011
+Commit: pending
+Impact: medium, module
 Date: 2026-02-19

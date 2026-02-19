@@ -19,9 +19,15 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
 
 class EmbeddingService:
-    def __init__(self, conn: sqlite3.Connection, model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> None:
+    def __init__(
+        self,
+        conn: sqlite3.Connection,
+        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+        backend: str = "hash",
+    ) -> None:
         self.conn = conn
         self.model_name = model_name
+        self.backend = backend
         self.conn.execute(
             """
             CREATE TABLE IF NOT EXISTS embedding_cache (
@@ -35,6 +41,8 @@ class EmbeddingService:
         self._model_unavailable = False
 
     def _model_or_none(self):
+        if self.backend != "sentence-transformers":
+            return None
         if self._model is not None:
             return self._model
         if self._model_unavailable:

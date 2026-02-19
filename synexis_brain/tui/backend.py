@@ -29,10 +29,19 @@ class SearchService:
         self.config_path = config_path
         self.config = load_config(config_path)
         self.vault_paths = {str(v["id"]): Path(str(v["path"])) for v in self.config.get("vaults", [])}
+        vector_cfg = self.config.get("vector", {}) if isinstance(self.config.get("vector", {}), dict) else {}
+        embedding_backend = str(vector_cfg.get("embedding_backend", "hash")).strip().lower()
+        embedding_model = str(
+            vector_cfg.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
+        ).strip()
         self.conn = connect_meta(db_path)
         ensure_meta_tables(self.conn)
         self.bm25 = build_bm25_backend(self.config, self.conn)
-        self.embedder = EmbeddingService(self.conn)
+        self.embedder = EmbeddingService(
+            self.conn,
+            model_name=embedding_model,
+            backend=embedding_backend,
+        )
         self.vector = VectorStore(self.conn, self.config)
 
     def reindex(self) -> dict[str, Any]:
