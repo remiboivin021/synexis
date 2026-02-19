@@ -10,7 +10,7 @@ from synexis_brain.indexer.incremental import apply_incremental_index
 from synexis_brain.indexer.metadata import connect_meta, ensure_meta_tables
 from synexis_brain.indexer.pipeline import run_dot_file
 from synexis_brain.indexer.scan import scan_vaults
-from synexis_brain.search.bm25 import SQLiteBm25Index
+from synexis_brain.search.backends import build_bm25_backend
 
 
 @dataclass
@@ -29,7 +29,7 @@ class SearchService:
         self.vault_paths = {str(v["id"]): Path(str(v["path"])) for v in self.config.get("vaults", [])}
         self.conn = connect_meta(db_path)
         ensure_meta_tables(self.conn)
-        self.bm25 = SQLiteBm25Index(self.conn)
+        self.bm25 = build_bm25_backend(self.config, self.conn)
 
     def reindex(self) -> dict[str, Any]:
         ctx = {
@@ -45,7 +45,7 @@ class SearchService:
                 "scan_vaults": scan_vaults,
                 "apply_incremental_index": apply_incremental_index,
             },
-            context=ctx,
+            context={**ctx, "bm25_backend": self.bm25},
         )
         return out.get("changes", {})
 
@@ -53,49 +53,19 @@ class SearchService:
         if not query.strip():
             return []
 
-        rows = self.conn.execute(
-            """
-            SELECT chunk_id, vault_id, path, heading,
-                   snippet(bm25_chunks, 4, '[', ']', '...', 16) AS preview,
-                   bm25(bm25_chunks) AS score,
-                   tags, type, status
-            FROM bm25_chunks
-            WHERE bm25_chunks MATCH ?
-              AND (? = '' OR vault_id = ?)
-              AND (? = '' OR type = ?)
-              AND (? = '' OR status = ?)
-              AND (? = '' OR tags LIKE ?)
-            ORDER BY score
-            LIMIT ?
-            """,
-            (
-                query,
-                filters.vault_id,
-                filters.vault_id,
-                filters.chunk_type,
-                filters.chunk_type,
-                filters.status,
-                filters.status,
-                filters.tag,
-                f"%{filters.tag}%" if filters.tag else "",
-                limit,
-            ),
-        ).fetchall()
-
-        return [
-            {
-                "chunk_id": row[0],
-                "vault_id": row[1],
-                "path": row[2],
-                "heading": row[3],
-                "preview": row[4],
-                "score": row[5],
-                "tags": row[6],
-                "type": row[7],
-                "status": row[8],
-            }
-            for row in rows
-        ]
+        results = self.bm25.topk(query=query, limit=limit)
+        out: list[dict[str, Any]] = []
+        for row in results:
+            if filters.vault_id and row.get("vault_id") != filters.vault_id:
+                continue
+            if filters.chunk_type and row.get("type") != filters.chunk_type:
+                continue
+            if filters.status and row.get("status") != filters.status:
+                continue
+            if filters.tag and filters.tag not in str(row.get("tags", "")):
+                continue
+            out.append(row)
+        return out
 
     def citation_for(self, result: dict[str, Any]) -> str:
         heading = result.get("heading") or ""

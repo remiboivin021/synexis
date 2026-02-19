@@ -53,6 +53,16 @@ Context: besoin d'une TUI rapide avec actions, mais environnement sans dépendan
 Decision: implémenter `tui/backend.py` (index/search/open/citation) et garder `tui/app.py` comme couche interface.
 Rationale: permet validation automatisée des comportements sans lancer l'UI.
 Task: T-005
+Commit: 10b5fa3
+Impact: medium, module
+Date: 2026-02-19
+
+### [D-006] Backend BM25 sélectionnable avec fallback explicite
+
+Context: migration vers Tantivy demandée sans dépendances natives garanties dans tous les environnements.
+Decision: introduire un builder de backend BM25 (`tantivy` prioritaire, fallback `sqlite` journalisé).
+Rationale: activer Tantivy dès disponibilité tout en gardant le moteur fonctionnel localement.
+Task: T-006
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19

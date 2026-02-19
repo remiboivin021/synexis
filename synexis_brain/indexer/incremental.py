@@ -15,7 +15,7 @@ from synexis_brain.search.bm25 import SQLiteBm25Index
 
 def apply_incremental_index(context: dict[str, Any], params: dict[str, str]) -> dict[str, Any]:
     conn: sqlite3.Connection = context["db_conn"]
-    bm25 = SQLiteBm25Index(conn)
+    bm25 = context.get("bm25_backend") or SQLiteBm25Index(conn)
     chunks_out: list[dict[str, Any]] = []
 
     for item in context.get("scan_items", []):

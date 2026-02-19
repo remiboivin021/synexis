@@ -45,7 +45,7 @@ class SQLiteBm25Index:
     def topk(self, query: str, limit: int = 20) -> list[dict[str, Any]]:
         rows = self.conn.execute(
             """
-            SELECT chunk_id, vault_id, path, heading, snippet(bm25_chunks, 4, '[', ']', '...', 16) AS preview, bm25(bm25_chunks) AS score
+            SELECT chunk_id, vault_id, path, heading, snippet(bm25_chunks, 4, '[', ']', '...', 16) AS preview, bm25(bm25_chunks) AS score, tags, type, status
             FROM bm25_chunks
             WHERE bm25_chunks MATCH ?
             ORDER BY score
@@ -58,9 +58,12 @@ class SQLiteBm25Index:
                 "chunk_id": row[0],
                 "vault_id": row[1],
                 "path": row[2],
-                "heading": row[3],
-                "preview": row[4],
-                "score": row[5],
-            }
+                    "heading": row[3],
+                    "preview": row[4],
+                    "score": row[5],
+                    "tags": row[6],
+                    "type": row[7],
+                    "status": row[8],
+                }
             for row in rows
         ]
