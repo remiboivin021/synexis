@@ -35,6 +35,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
+- [x] [T-016] Rendre les requêtes FTS BM25 robustes (pluriel/prefix) | commit: pending
 - [x] [T-015] Rebuilder BM25 SQLite si metadata présente mais FTS vide | commit: pending
 - [x] [T-014] Corriger l'usage SQLite cross-thread depuis la TUI async | commit: a8c0677
 - [x] [T-013] Normaliser les chemins relatifs pour stabiliser la DB d'index | commit: 10ad1e4

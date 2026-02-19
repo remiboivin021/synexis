@@ -146,3 +146,13 @@ Task: T-015
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19
+
+### [D-015] Normaliser la requête BM25 FTS pour meilleure tolérance FR
+
+Context: requête utilisateur `projets en cours` sans résultat malgré contenu pertinent.
+Decision: transformer la requête en clauses FTS avec prefix (`*`) et variante singulier/pluriel simple.
+Rationale: augmenter le rappel sans changer l'architecture de recherche.
+Task: T-016
+Commit: pending
+Impact: medium, module
+Date: 2026-02-19
