@@ -133,6 +133,16 @@ Context: `action_reindex` exécute `service.reindex` dans `asyncio.to_thread`, p
 Decision: ouvrir la connexion SQLite avec `check_same_thread=False`.
 Rationale: garder l'UI non bloquante sans crash runtime sur reindex.
 Task: T-014
+Commit: a8c0677
+Impact: medium, module
+Date: 2026-02-19
+
+### [D-014] Rebuild BM25 si l'index FTS est vide malgré metadata inchangée
+
+Context: recherche vide observée alors que `scan` retourne `unchanged` (metadata déjà indexée).
+Decision: forcer une passe de reconstruction quand backend SQLite BM25 est vide.
+Rationale: garantir des résultats même après switch backend/config ou corruption partielle de la table FTS.
+Task: T-015
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19

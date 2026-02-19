@@ -38,6 +38,12 @@ class SQLiteBm25Index:
             )
         self.conn.commit()
 
+    def is_empty(self) -> bool:
+        row = self.conn.execute("SELECT COUNT(*) FROM bm25_chunks").fetchone()
+        if row is None:
+            return True
+        return int(row[0]) == 0
+
     def delete_file(self, vault_id: str, path: str) -> None:
         self.conn.execute("DELETE FROM bm25_chunks WHERE vault_id = ? AND path = ?", (vault_id, path))
         self.conn.commit()

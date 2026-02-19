@@ -17,10 +17,11 @@ def apply_incremental_index(context: dict[str, Any], params: dict[str, str]) -> 
     conn: sqlite3.Connection = context["db_conn"]
     bm25 = context.get("bm25_backend") or SQLiteBm25Index(conn)
     chunks_out: list[dict[str, Any]] = []
+    force_bm25_bootstrap = isinstance(bm25, SQLiteBm25Index) and bm25.is_empty()
 
     for item in context.get("scan_items", []):
         action = item["action"]
-        if action == "unchanged":
+        if action == "unchanged" and not force_bm25_bootstrap:
             continue
 
         delete_chunks_for_file(conn, item["vault_id"], item["path"])
