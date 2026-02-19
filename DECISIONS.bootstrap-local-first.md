@@ -33,6 +33,16 @@ Context: l'exécution locale des validations a produit des fichiers `.pyc`.
 Decision: ajouter `.gitignore` et retirer les caches suivis.
 Rationale: éviter le bruit de versioning et les diffs non fonctionnels.
 Task: T-003
-Commit: pending
+Commit: a9f29e1
 Impact: low, localized
+Date: 2026-02-19
+
+### [D-004] BM25 bootstrap via SQLite FTS5 avant Tantivy
+
+Context: besoin d'indexation/recherche utilisable immédiatement dans un repo initial.
+Decision: implémenter une couche BM25 transitoire basée sur SQLite FTS5, en gardant l'ADR Tantivy comme cible.
+Rationale: livrer l'indexation incrémentale et la purge suppression sans bloquer sur dépendances natives.
+Task: T-004
+Commit: pending
+Impact: medium, module
 Date: 2026-02-19

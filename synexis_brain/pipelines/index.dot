@@ -1,10 +1,6 @@
 digraph index_pipeline {
   scan [op="scan_vaults"];
-  parse [op="parse_md"];
-  chunk [op="chunk_by_heading"];
-  index [op="upsert_bm25"];
+  index [op="apply_incremental_index"];
 
-  scan -> parse;
-  parse -> chunk;
-  chunk -> index;
+  scan -> index;
 }

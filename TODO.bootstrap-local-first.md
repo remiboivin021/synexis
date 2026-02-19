@@ -19,13 +19,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-003] Nettoyer les artefacts build locaux et figer .gitignore
+- [ ] [T-005] Implémenter la TUI BM25-only avec preview et actions
 
 ---
 
 # Next Tasks
-- [ ] [T-004] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25
-- [ ] [T-005] Implémenter la TUI BM25-only avec preview et actions
+- [ ] [T-006] Ajouter couche vectorielle Qdrant + embeddings + merge hybride
 
 ---
 
@@ -35,6 +34,8 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
+- [x] [T-004] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25 | commit: pending
+- [x] [T-003] Nettoyer les artefacts build locaux et figer .gitignore | commit: a9f29e1
 - [x] [T-002] Implémenter runner DOT minimal avec trace/stats et test hello | commit: c1d5f59
 - [x] [T-001] Créer les fondations docs, ADR socle, constitution canonique | commit: 0a1b479
 - [x] [T-000] bootstrap feature artifacts | commit: pending
