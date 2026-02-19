@@ -116,3 +116,13 @@ Task: T-011
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19
+
+### [D-012] Résoudre db/index path relatifs sur base du fichier config
+
+Context: indexation perçue comme systématiquement longue malgré absence de changements.
+Decision: résoudre `db_path`, `tantivy_index_dir` et chemins vault relatifs par rapport au dossier de `config.yml`.
+Rationale: éviter la dérive liée au répertoire courant et empêcher la recréation implicite d'index/meta ailleurs.
+Task: T-013
+Commit: pending
+Impact: medium, module
+Date: 2026-02-19

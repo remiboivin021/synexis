@@ -25,16 +25,39 @@ class SearchFilters:
 
 class SearchService:
     def __init__(self, db_path: str, config_path: str) -> None:
-        self.db_path = db_path
-        self.config_path = config_path
-        self.config = load_config(config_path)
-        self.vault_paths = {str(v["id"]): Path(str(v["path"])) for v in self.config.get("vaults", [])}
+        config_file = Path(config_path).expanduser().resolve()
+        self.config_path = str(config_file)
+        config_dir = config_file.parent
+
+        raw_db_path = Path(db_path).expanduser()
+        if not raw_db_path.is_absolute():
+            raw_db_path = config_dir / raw_db_path
+        self.db_path = str(raw_db_path)
+
+        self.config = load_config(self.config_path)
+
+        # Normalize relative config paths against config file location to avoid cwd-dependent reindexing.
+        search_cfg = self.config.get("search", {}) if isinstance(self.config.get("search", {}), dict) else {}
+        tantivy_dir = search_cfg.get("tantivy_index_dir")
+        if isinstance(tantivy_dir, str) and tantivy_dir and not Path(tantivy_dir).is_absolute():
+            search_cfg["tantivy_index_dir"] = str((config_dir / tantivy_dir).resolve())
+            self.config["search"] = search_cfg
+
+        self.vault_paths = {}
+        for vault in self.config.get("vaults", []):
+            vault_id = str(vault["id"])
+            raw_vault = Path(str(vault["path"])).expanduser()
+            if not raw_vault.is_absolute():
+                raw_vault = config_dir / raw_vault
+            resolved_vault = raw_vault.resolve()
+            vault["path"] = str(resolved_vault)
+            self.vault_paths[vault_id] = resolved_vault
         vector_cfg = self.config.get("vector", {}) if isinstance(self.config.get("vector", {}), dict) else {}
         embedding_backend = str(vector_cfg.get("embedding_backend", "hash")).strip().lower()
         embedding_model = str(
             vector_cfg.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
         ).strip()
-        self.conn = connect_meta(db_path)
+        self.conn = connect_meta(self.db_path)
         ensure_meta_tables(self.conn)
         self.bm25 = build_bm25_backend(self.config, self.conn)
         self.embedder = EmbeddingService(
