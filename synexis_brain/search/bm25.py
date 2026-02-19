@@ -50,28 +50,18 @@ class SQLiteBm25Index:
         self.conn.commit()
 
     def topk(self, query: str, limit: int = 20) -> list[dict[str, Any]]:
-        fts_query = _build_fts_query(query)
-        rows = self.conn.execute(
-            """
-            SELECT chunk_id, vault_id, path, heading, snippet(bm25_chunks, 4, '[', ']', '...', 16) AS preview, bm25(bm25_chunks) AS score, tags, type, status
-            FROM bm25_chunks
-            WHERE bm25_chunks MATCH ?
-            ORDER BY score
-            LIMIT ?
-            """,
-            (fts_query, limit),
-        ).fetchall()
+        clauses = _build_fts_clauses(query)
+        fts_query = _join_clauses(clauses, mode="and") or query
+        rows = self._run_fts_query(fts_query, limit)
+        if not rows:
+            if len(clauses) > 1:
+                rows = self._run_fts_query(clauses[0], limit)
+            if not rows:
+                fallback_or = _join_clauses(clauses, mode="or")
+                if fallback_or and fallback_or != fts_query:
+                    rows = self._run_fts_query(fallback_or, limit)
         if not rows and fts_query != query:
-            rows = self.conn.execute(
-                """
-                SELECT chunk_id, vault_id, path, heading, snippet(bm25_chunks, 4, '[', ']', '...', 16) AS preview, bm25(bm25_chunks) AS score, tags, type, status
-                FROM bm25_chunks
-                WHERE bm25_chunks MATCH ?
-                ORDER BY score
-                LIMIT ?
-                """,
-                (query, limit),
-            ).fetchall()
+            rows = self._run_fts_query(query, limit)
         return [
             {
                 "chunk_id": row[0],
@@ -87,11 +77,23 @@ class SQLiteBm25Index:
             for row in rows
         ]
 
+    def _run_fts_query(self, query: str, limit: int) -> list[tuple[Any, ...]]:
+        return self.conn.execute(
+            """
+            SELECT chunk_id, vault_id, path, heading, snippet(bm25_chunks, 4, '[', ']', '...', 16) AS preview, bm25(bm25_chunks) AS score, tags, type, status
+            FROM bm25_chunks
+            WHERE bm25_chunks MATCH ?
+            ORDER BY score
+            LIMIT ?
+            """,
+            (query, limit),
+        ).fetchall()
 
-def _build_fts_query(raw: str) -> str:
+
+def _build_fts_clauses(raw: str) -> list[str]:
     tokens = re.findall(r"[A-Za-z0-9_]+", raw.lower())
     if not tokens:
-        return raw
+        return []
 
     clauses: list[str] = []
     for token in tokens:
@@ -103,5 +105,12 @@ def _build_fts_query(raw: str) -> str:
             continue
         clause = opts[0] if len(opts) == 1 else "(" + " OR ".join(opts) + ")"
         clauses.append(clause)
+    return clauses
 
-    return " AND ".join(clauses) if clauses else raw
+
+def _join_clauses(clauses: list[str], mode: str = "and") -> str:
+    if not clauses:
+        return ""
+    if mode == "or":
+        return " OR ".join(clauses)
+    return " AND ".join(clauses)

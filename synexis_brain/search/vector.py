@@ -39,6 +39,7 @@ class EmbeddingService:
         self.conn.commit()
         self._model: Any = None
         self._model_unavailable = False
+        self._query_cache: dict[str, list[float]] = {}
 
     def _model_or_none(self):
         if self.backend != "sentence-transformers":
@@ -52,15 +53,28 @@ class EmbeddingService:
         except ModuleNotFoundError:
             self._model_unavailable = True
             return None
-        self._model = SentenceTransformer(self.model_name)
+        try:
+            self._model = SentenceTransformer(self.model_name)
+        except Exception:
+            self._model_unavailable = True
+            return None
         return self._model
 
     def embed_text(self, text: str) -> list[float]:
+        key = text.strip()
+        cached = self._query_cache.get(key)
+        if cached is not None:
+            return cached
         model = self._model_or_none()
         if model is None:
-            return _hash_embedding(text)
-        vector = model.encode([text])[0]
-        return [float(x) for x in vector]
+            vector = _hash_embedding(text)
+        else:
+            vector = model.encode([text])[0]
+            vector = [float(x) for x in vector]
+        self._query_cache[key] = vector
+        if len(self._query_cache) > 256:
+            self._query_cache.clear()
+        return vector
 
     def embedding_for_chunk(self, chunk_hash: str, text: str) -> list[float]:
         return self.embeddings_for_chunks([{"chunk_hash": chunk_hash, "text": text}])[0]
@@ -146,7 +160,7 @@ class VectorStore:
                 self.client = None
             else:
                 try:
-                    self.client = QdrantClient(url=self.url, timeout=2.0)
+                    self.client = QdrantClient(url=self.url, timeout=2.0, check_compatibility=False)
                     self.client.get_collections()
                     self.mode = "qdrant"
                 except Exception as exc:
@@ -170,6 +184,33 @@ class VectorStore:
             """
         )
         self.conn.commit()
+        self._sqlite_cache: list[tuple[list[float], dict[str, Any]]] | None = None
+
+    def _invalidate_sqlite_cache(self) -> None:
+        self._sqlite_cache = None
+
+    def _load_sqlite_cache(self) -> list[tuple[list[float], dict[str, Any]]]:
+        if self._sqlite_cache is not None:
+            return self._sqlite_cache
+        rows = self.conn.execute(
+            "SELECT chunk_id, vault_id, path, heading, tags, type, status, text, embedding FROM vector_chunks"
+        ).fetchall()
+        cache: list[tuple[list[float], dict[str, Any]]] = []
+        for row in rows:
+            vec = [float(x) for x in row[8].split(",") if x]
+            payload = {
+                "chunk_id": row[0],
+                "vault_id": row[1],
+                "path": row[2],
+                "heading": row[3],
+                "tags": row[4],
+                "type": row[5],
+                "status": row[6],
+                "preview": row[7][:240],
+            }
+            cache.append((vec, payload))
+        self._sqlite_cache = cache
+        return cache
 
     def upsert(self, chunks: list[dict[str, Any]], vectors: list[list[float]]) -> None:
         if not self.enabled:
@@ -202,6 +243,7 @@ class VectorStore:
                 ),
             )
         self.conn.commit()
+        self._invalidate_sqlite_cache()
 
     def delete_file(self, vault_id: str, path: str) -> None:
         if self.mode == "qdrant" and self.client is not None:
@@ -223,6 +265,7 @@ class VectorStore:
                 self.mode = "sqlite"
         self.conn.execute("DELETE FROM vector_chunks WHERE vault_id = ? AND path = ?", (vault_id, path))
         self.conn.commit()
+        self._invalidate_sqlite_cache()
 
     def topk(self, query_vector: list[float], limit: int = 20) -> list[dict[str, Any]]:
         if not self.enabled:
@@ -256,23 +299,12 @@ class VectorStore:
                 self.log.warning("Qdrant search failed: %s; fallback sqlite vector store", exc)
                 self.mode = "sqlite"
 
-        rows = self.conn.execute(
-            "SELECT chunk_id, vault_id, path, heading, tags, type, status, text, embedding FROM vector_chunks"
-        ).fetchall()
         scored: list[dict[str, Any]] = []
-        for row in rows:
-            vec = [float(x) for x in row[8].split(",") if x]
+        for vec, payload in self._load_sqlite_cache():
             score = _cosine(query_vector, vec)
             scored.append(
                 {
-                    "chunk_id": row[0],
-                    "vault_id": row[1],
-                    "path": row[2],
-                    "heading": row[3],
-                    "tags": row[4],
-                    "type": row[5],
-                    "status": row[6],
-                    "preview": row[7][:240],
+                    **payload,
                     "score": score,
                 }
             )

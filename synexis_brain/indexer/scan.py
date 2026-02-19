@@ -26,6 +26,16 @@ def _sha1_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _is_volatile_path(path: Path) -> bool:
+    name = path.name
+    # Editor temp/lock files can appear/disappear during scan (e.g. Emacs/Obsidian sync artifacts).
+    if name.startswith(".#"):
+        return True
+    if name.endswith("~"):
+        return True
+    return False
+
+
 def _matches(rel_path: str, includes: list[str], excludes: list[str]) -> bool:
     def match_any(patterns: list[str]) -> bool:
         for pat in patterns:
@@ -64,19 +74,31 @@ def scan_vaults(context: dict[str, Any], params: dict[str, str]) -> dict[str, An
         excludes = list(vault.get("exclude", []))
 
         for md_file in vault_path.rglob("*.md"):
+            if _is_volatile_path(md_file):
+                continue
             rel_path = md_file.relative_to(vault_path).as_posix()
             if not _matches(rel_path, includes, excludes):
                 continue
-            stat = md_file.stat()
+            try:
+                stat = md_file.stat()
+            except FileNotFoundError:
+                # File vanished between directory walk and stat.
+                continue
             meta = get_file_meta(conn, vault_id, rel_path)
             file_hash = meta["file_hash"] if meta else ""
             action = "unchanged"
 
             if not meta:
                 action = "new"
-                file_hash = _sha1_file(md_file)
+                try:
+                    file_hash = _sha1_file(md_file)
+                except FileNotFoundError:
+                    continue
             elif _mtime_changed(float(meta["mtime"]), float(stat.st_mtime)) or int(meta["size"]) != stat.st_size:
-                new_hash = _sha1_file(md_file)
+                try:
+                    new_hash = _sha1_file(md_file)
+                except FileNotFoundError:
+                    continue
                 if new_hash != meta["file_hash"]:
                     action = "changed"
                 file_hash = new_hash

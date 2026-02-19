@@ -10,16 +10,21 @@ def hybrid_merge(
     w_vector: float = 0.4,
     limit: int = 20,
 ) -> list[dict[str, Any]]:
-    def normalize(scores: list[float]) -> list[float]:
+    def normalize(scores: list[float], higher_is_better: bool = True) -> list[float]:
         if not scores:
             return []
         lo, hi = min(scores), max(scores)
         if hi == lo:
             return [1.0 for _ in scores]
-        return [(s - lo) / (hi - lo) for s in scores]
+        if higher_is_better:
+            return [(s - lo) / (hi - lo) for s in scores]
+        return [(hi - s) / (hi - lo) for s in scores]
 
-    bm25_norm = normalize([float(x.get("score", 0.0)) for x in bm25_results])
-    vec_norm = normalize([float(x.get("score", 0.0)) for x in vector_results])
+    bm25_scores = [float(x.get("score", 0.0)) for x in bm25_results]
+    vec_scores = [float(x.get("score", 0.0)) for x in vector_results]
+    bm25_higher_is_better = any(score > 0 for score in bm25_scores)
+    bm25_norm = normalize(bm25_scores, higher_is_better=bm25_higher_is_better)
+    vec_norm = normalize(vec_scores, higher_is_better=True)
 
     merged: dict[str, dict[str, Any]] = {}
 

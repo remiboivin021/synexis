@@ -18,6 +18,15 @@ class HybridMergeTest(unittest.TestCase):
         ids = [x["chunk_id"] for x in merged]
         self.assertEqual(ids, ["b", "a", "c"])
 
+    def test_sqlite_bm25_negative_scores_rank_correctly(self) -> None:
+        bm25 = [
+            {"chunk_id": "best", "score": -3.0, "path": "best.md"},
+            {"chunk_id": "worst", "score": -0.2, "path": "worst.md"},
+        ]
+        merged = hybrid_merge(bm25, [], limit=2)
+        ids = [x["chunk_id"] for x in merged]
+        self.assertEqual(ids, ["best", "worst"])
+
 
 if __name__ == "__main__":
     unittest.main()

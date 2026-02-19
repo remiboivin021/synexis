@@ -45,11 +45,12 @@ class SynexisApp(App):
         self.filters = SearchFilters()
         self._debounce_task: asyncio.Task[None] | None = None
         self._results: list[dict[str, Any]] = []
+        self._search_seq = 0
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Container(id="top"):
-            yield Input(placeholder="Search (BM25)", id="search")
+            yield Input(placeholder="Semantic search (embeddings)", id="search")
         with Horizontal(id="filters"):
             yield Input(placeholder="vault", id="vault")
             yield Input(placeholder="type", id="type")
@@ -82,7 +83,22 @@ class SynexisApp(App):
         await asyncio.sleep(0.2)
         try:
             query = self.query_one("#search", Input).value
-            self._results = self.service.search(query=query, filters=self.filters)
+            self._search_seq += 1
+            seq = self._search_seq
+            snapshot_filters = SearchFilters(
+                vault_id=self.filters.vault_id,
+                chunk_type=self.filters.chunk_type,
+                tag=self.filters.tag,
+                status=self.filters.status,
+            )
+            results_data = await asyncio.to_thread(
+                self.service.search,
+                query,
+                snapshot_filters,
+            )
+            if seq != self._search_seq:
+                return
+            self._results = results_data
             results = self.query_one("#results", ListView)
             results.clear()
             for result in self._results:
