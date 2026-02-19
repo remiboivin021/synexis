@@ -11,6 +11,8 @@ from synexis_brain.indexer.metadata import connect_meta, ensure_meta_tables
 from synexis_brain.indexer.pipeline import run_dot_file
 from synexis_brain.indexer.scan import scan_vaults
 from synexis_brain.search.backends import build_bm25_backend
+from synexis_brain.search.hybrid import hybrid_merge
+from synexis_brain.search.vector import EmbeddingService, VectorStore
 
 
 @dataclass
@@ -30,6 +32,8 @@ class SearchService:
         self.conn = connect_meta(db_path)
         ensure_meta_tables(self.conn)
         self.bm25 = build_bm25_backend(self.config, self.conn)
+        self.embedder = EmbeddingService(self.conn)
+        self.vector = VectorStore(self.conn, self.config)
 
     def reindex(self) -> dict[str, Any]:
         ctx = {
@@ -47,13 +51,24 @@ class SearchService:
             },
             context={**ctx, "bm25_backend": self.bm25},
         )
+        chunks = out.get("chunks", [])
+        vectors = [
+            self.embedder.embedding_for_chunk(chunk["chunk_hash"], chunk.get("text", ""))
+            for chunk in chunks
+        ]
+        self.vector.upsert(chunks, vectors)
+        for item in out.get("changes", {}).get("deleted", []):
+            self.vector.delete_file(item["vault_id"], item["path"])
         return out.get("changes", {})
 
     def search(self, query: str, filters: SearchFilters, limit: int = 50) -> list[dict[str, Any]]:
         if not query.strip():
             return []
 
-        results = self.bm25.topk(query=query, limit=limit)
+        bm25_results = self.bm25.topk(query=query, limit=limit)
+        query_vector = self.embedder.embed_text(query)
+        vector_results = self.vector.topk(query_vector=query_vector, limit=limit)
+        results = hybrid_merge(bm25_results=bm25_results, vector_results=vector_results, limit=limit)
         out: list[dict[str, Any]] = []
         for row in results:
             if filters.vault_id and row.get("vault_id") != filters.vault_id:

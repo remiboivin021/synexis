@@ -19,12 +19,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-006] Remplacer BM25 bootstrap par BM25 Tantivy
+- [ ] [T-007] Ajouter couche vectorielle Qdrant + embeddings + merge hybride
 
 ---
 
 # Next Tasks
-- [ ] [T-007] Ajouter couche vectorielle Qdrant + embeddings + merge hybride
+- [ ] [T-008] Ajouter mode answer (RAG sourcé) dans la TUI
 
 ---
 
@@ -34,6 +34,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
+- [x] [T-006] Remplacer BM25 bootstrap par BM25 Tantivy | commit: 1e84d45
 - [x] [T-005] Implémenter la TUI BM25-only avec preview et actions | commit: 10b5fa3
 - [x] [T-004] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25 | commit: a5581ed
 - [x] [T-003] Nettoyer les artefacts build locaux et figer .gitignore | commit: a9f29e1

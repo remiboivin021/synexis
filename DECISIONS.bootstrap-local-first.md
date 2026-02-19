@@ -63,6 +63,16 @@ Context: migration vers Tantivy demandée sans dépendances natives garanties da
 Decision: introduire un builder de backend BM25 (`tantivy` prioritaire, fallback `sqlite` journalisé).
 Rationale: activer Tantivy dès disponibilité tout en gardant le moteur fonctionnel localement.
 Task: T-006
-Commit: pending
+Commit: 1e84d45
 Impact: medium, module
+Date: 2026-02-19
+
+### [D-007] Couche vectorielle avec fallback local déterministe
+
+Context: activation vectorielle demandée mais dépendances externes (Qdrant/SentenceTransformer) potentiellement absentes en local.
+Decision: implémenter Qdrant + embeddings avec fallback local (SQLite + embedding hash déterministe) activable via config.
+Rationale: conserver un mode opérable et testable tout en préparant l'activation complète en environnement équipé.
+Task: T-007
+Commit: pending
+Impact: high, module
 Date: 2026-02-19

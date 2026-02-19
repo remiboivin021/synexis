@@ -55,6 +55,7 @@ Construire le socle exécutable local-first de Synexis Brain en suivant l'ordre 
 - tests/test_tui_backend.py
 - pyproject.toml
 - .gitignore
+- docker-compose.yml
 - README.md
 - STATE.bootstrap-local-first.md
 - TODO.bootstrap-local-first.md
