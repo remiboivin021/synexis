@@ -35,8 +35,9 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
-- [x] [T-013] Normaliser les chemins relatifs pour stabiliser la DB d'index | commit: pending
-- [x] [T-011] Réduire le coût d'indexation via embedding backend rapide par défaut | commit: pending
+- [x] [T-014] Corriger l'usage SQLite cross-thread depuis la TUI async | commit: pending
+- [x] [T-013] Normaliser les chemins relatifs pour stabiliser la DB d'index | commit: 10ad1e4
+- [x] [T-011] Réduire le coût d'indexation via embedding backend rapide par défaut | commit: caa1fbf
 - [x] [T-009] Corriger lenteur indexation et upsert Qdrant non fiable | commit: 5ebd2e3
 - [x] [T-007] Ajouter couche vectorielle Qdrant + embeddings + merge hybride | commit: fedfc57
 - [x] [T-006] Remplacer BM25 bootstrap par BM25 Tantivy | commit: 1e84d45

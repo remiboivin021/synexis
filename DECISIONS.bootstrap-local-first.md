@@ -103,7 +103,7 @@ Context: indexation encore trop longue sur machine locale et grands vaults.
 Decision: rendre `vector.embedding_backend=hash` par défaut; `sentence-transformers` devient opt-in explicite.
 Rationale: supprimer le coût de chargement/inférence modèle par défaut et garder une expérience réactive.
 Task: T-011
-Commit: pending
+Commit: caa1fbf
 Impact: medium, module
 Date: 2026-02-19
 
@@ -113,7 +113,7 @@ Context: réindexation observée comme très longue à chaque run même sans mod
 Decision: comparer `mtime` avec tolérance epsilon pour absorber le bruit float SQLite.
 Rationale: empêcher les faux positifs \"changed\" et rendre les runs successifs quasi instantanés.
 Task: T-011
-Commit: pending
+Commit: caa1fbf
 Impact: medium, module
 Date: 2026-02-19
 
@@ -123,6 +123,16 @@ Context: indexation perçue comme systématiquement longue malgré absence de ch
 Decision: résoudre `db_path`, `tantivy_index_dir` et chemins vault relatifs par rapport au dossier de `config.yml`.
 Rationale: éviter la dérive liée au répertoire courant et empêcher la recréation implicite d'index/meta ailleurs.
 Task: T-013
+Commit: 10ad1e4
+Impact: medium, module
+Date: 2026-02-19
+
+### [D-013] Autoriser SQLite pour les appels de reindex en thread
+
+Context: `action_reindex` exécute `service.reindex` dans `asyncio.to_thread`, provoquant une erreur SQLite de thread affinity.
+Decision: ouvrir la connexion SQLite avec `check_same_thread=False`.
+Rationale: garder l'UI non bloquante sans crash runtime sur reindex.
+Task: T-014
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19
