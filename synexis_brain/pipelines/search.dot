@@ -1,0 +1,8 @@
+digraph search_pipeline {
+  bm25 [op="bm25_topk"];
+  vector [op="vector_topk"];
+  merge [op="hybrid_merge"];
+
+  bm25 -> merge;
+  vector -> merge;
+}

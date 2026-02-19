@@ -1,0 +1,3 @@
+digraph hello_pipeline {
+  hello [op="hello_op"];
+}

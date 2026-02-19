@@ -19,12 +19,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-002] Implémenter runner DOT minimal avec trace/stats et test hello
+- [ ] [T-003] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25
 
 ---
 
 # Next Tasks
-- [ ] [T-003] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25
+- [ ] [T-004] Implémenter la TUI BM25-only avec preview et actions
 
 ---
 
@@ -34,5 +34,6 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
-- [x] [T-001] Créer les fondations docs, ADR socle, constitution canonique | commit: pending
+- [x] [T-002] Implémenter runner DOT minimal avec trace/stats et test hello | commit: pending
+- [x] [T-001] Créer les fondations docs, ADR socle, constitution canonique | commit: 0a1b479
 - [x] [T-000] bootstrap feature artifacts | commit: pending
