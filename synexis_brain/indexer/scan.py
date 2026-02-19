@@ -10,6 +10,11 @@ from synexis_brain.config import load_config
 from synexis_brain.indexer.metadata import ensure_meta_tables, get_file_meta, list_file_meta
 
 
+def _mtime_changed(stored_mtime: float, current_mtime: float) -> bool:
+    # SQLite float round-trips can drift by tiny epsilons; keep scan deterministic.
+    return abs(stored_mtime - current_mtime) > 1e-6
+
+
 def _sha1_file(path: Path) -> str:
     digest = hashlib.sha1()
     with path.open("rb") as handle:
@@ -70,7 +75,7 @@ def scan_vaults(context: dict[str, Any], params: dict[str, str]) -> dict[str, An
             if not meta:
                 action = "new"
                 file_hash = _sha1_file(md_file)
-            elif float(meta["mtime"]) != stat.st_mtime or int(meta["size"]) != stat.st_size:
+            elif _mtime_changed(float(meta["mtime"]), float(stat.st_mtime)) or int(meta["size"]) != stat.st_size:
                 new_hash = _sha1_file(md_file)
                 if new_hash != meta["file_hash"]:
                     action = "changed"

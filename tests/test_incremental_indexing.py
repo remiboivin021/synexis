@@ -44,6 +44,11 @@ vaults:
             ctx.update(out)
             apply_incremental_index(ctx, {})
 
+            out_same = scan_vaults(ctx, {})
+            self.assertEqual(out_same["changes"]["new"], 0)
+            self.assertEqual(out_same["changes"]["changed"], 0)
+            self.assertEqual(out_same["changes"]["unchanged"], 1)
+
             note.unlink()
             out2 = scan_vaults(ctx, {})
             self.assertEqual(len(out2["changes"]["deleted"]), 1)

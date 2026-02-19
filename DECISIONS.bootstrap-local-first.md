@@ -106,3 +106,13 @@ Task: T-011
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19
+
+### [D-011] Tolérance mtime pour éviter reindex complet inutile
+
+Context: réindexation observée comme très longue à chaque run même sans modification des fichiers.
+Decision: comparer `mtime` avec tolérance epsilon pour absorber le bruit float SQLite.
+Rationale: empêcher les faux positifs \"changed\" et rendre les runs successifs quasi instantanés.
+Task: T-011
+Commit: pending
+Impact: medium, module
+Date: 2026-02-19
