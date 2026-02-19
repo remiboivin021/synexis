@@ -90,6 +90,8 @@ Aucune autre worktree active sur ce repo. Risque de collision: faible.
 
 1. [T-001] Créer les fondations docs + ADR socle + artefacts feature.
 2. [T-002] Implémenter runner DOT minimal + pipelines example + test hello.
+3. [T-003] Nettoyer les artefacts build locaux (`__pycache__`) et figer `.gitignore`.
+4. [T-004] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25.
 
 ---
 
@@ -104,4 +106,3 @@ Pas de surface sécurité implémentée dans cette tranche (pas de connecteur r�
 ✔ Foundations docs/ADR lisibles
 ✔ Runner DOT exécutable avec trace/stats
 ✔ Test runner passe
-

@@ -23,6 +23,16 @@ Context: bootstrap sans dépendances installées et besoin d'un runner immédiat
 Decision: implémenter un parser DOT restreint (nodes, attrs, edges) avec regex stdlib + TopologicalSorter.
 Rationale: réduire la complexité initiale tout en respectant le contrat DAG/op registry.
 Task: T-002
-Commit: pending
+Commit: c1d5f59
 Impact: medium, module
+Date: 2026-02-19
+
+### [D-003] Exclure les artefacts Python compilés du VCS
+
+Context: l'exécution locale des validations a produit des fichiers `.pyc`.
+Decision: ajouter `.gitignore` et retirer les caches suivis.
+Rationale: éviter le bruit de versioning et les diffs non fonctionnels.
+Task: T-003
+Commit: pending
+Impact: low, localized
 Date: 2026-02-19
