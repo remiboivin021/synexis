@@ -24,6 +24,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Next Tasks
+- [ ] [T-008] Ajouter mode answer (RAG sourcé) dans la TUI
 - [ ] [T-010] Ajouter watcher local (one-shot + daemon)
 - [ ] [T-012] Exposer métriques de scan/reindex dans la TUI
 
@@ -35,8 +36,9 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
-- [x] [T-016] Rendre les requêtes FTS BM25 robustes (pluriel/prefix) | commit: pending
-- [x] [T-015] Rebuilder BM25 SQLite si metadata présente mais FTS vide | commit: pending
+- [x] [T-017] Ajouter NLU léger pour inférer des filtres depuis la requête | commit: pending
+- [x] [T-016] Rendre les requêtes FTS BM25 robustes (pluriel/prefix) | commit: b973dc1
+- [x] [T-015] Rebuilder BM25 SQLite si metadata présente mais FTS vide | commit: 6ece1b1
 - [x] [T-014] Corriger l'usage SQLite cross-thread depuis la TUI async | commit: a8c0677
 - [x] [T-013] Normaliser les chemins relatifs pour stabiliser la DB d'index | commit: 10ad1e4
 - [x] [T-011] Réduire le coût d'indexation via embedding backend rapide par défaut | commit: caa1fbf

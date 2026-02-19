@@ -12,6 +12,7 @@ from synexis_brain.indexer.pipeline import run_dot_file
 from synexis_brain.indexer.scan import scan_vaults
 from synexis_brain.search.backends import build_bm25_backend
 from synexis_brain.search.hybrid import hybrid_merge
+from synexis_brain.search.nlu import infer_filters
 from synexis_brain.search.vector import EmbeddingService, VectorStore
 
 
@@ -94,19 +95,27 @@ class SearchService:
         if not query.strip():
             return []
 
-        bm25_results = self.bm25.topk(query=query, limit=limit)
-        query_vector = self.embedder.embed_text(query)
+        nlu = infer_filters(query, available_vaults=list(self.vault_paths.keys()))
+        effective = SearchFilters(
+            vault_id=filters.vault_id or nlu.inferred.vault_id,
+            chunk_type=filters.chunk_type or nlu.inferred.chunk_type,
+            tag=filters.tag or nlu.inferred.tag,
+            status=filters.status or nlu.inferred.status,
+        )
+
+        bm25_results = self.bm25.topk(query=nlu.text_query, limit=limit)
+        query_vector = self.embedder.embed_text(nlu.text_query)
         vector_results = self.vector.topk(query_vector=query_vector, limit=limit)
         results = hybrid_merge(bm25_results=bm25_results, vector_results=vector_results, limit=limit)
         out: list[dict[str, Any]] = []
         for row in results:
-            if filters.vault_id and row.get("vault_id") != filters.vault_id:
+            if effective.vault_id and row.get("vault_id") != effective.vault_id:
                 continue
-            if filters.chunk_type and row.get("type") != filters.chunk_type:
+            if effective.chunk_type and row.get("type") != effective.chunk_type:
                 continue
-            if filters.status and row.get("status") != filters.status:
+            if effective.status and row.get("status") != effective.status:
                 continue
-            if filters.tag and filters.tag not in str(row.get("tags", "")):
+            if effective.tag and effective.tag not in str(row.get("tags", "")):
                 continue
             out.append(row)
         return out

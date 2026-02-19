@@ -143,7 +143,7 @@ Context: recherche vide observée alors que `scan` retourne `unchanged` (metadat
 Decision: forcer une passe de reconstruction quand backend SQLite BM25 est vide.
 Rationale: garantir des résultats même après switch backend/config ou corruption partielle de la table FTS.
 Task: T-015
-Commit: pending
+Commit: 6ece1b1
 Impact: medium, module
 Date: 2026-02-19
 
@@ -153,6 +153,16 @@ Context: requête utilisateur `projets en cours` sans résultat malgré contenu 
 Decision: transformer la requête en clauses FTS avec prefix (`*`) et variante singulier/pluriel simple.
 Rationale: augmenter le rappel sans changer l'architecture de recherche.
 Task: T-016
+Commit: b973dc1
+Impact: medium, module
+Date: 2026-02-19
+
+### [D-016] NLU heuristique pour filtres implicites de requête
+
+Context: besoin d'inférer des filtres intelligents depuis le langage naturel utilisateur.
+Decision: ajouter un parseur léger déterministe (status/type/tag/vault) sans dépendances externes.
+Rationale: améliorer la pertinence immédiate des résultats tout en gardant un comportement prévisible.
+Task: T-017
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19
