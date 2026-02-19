@@ -43,6 +43,16 @@ Context: besoin d'indexation/recherche utilisable immédiatement dans un repo in
 Decision: implémenter une couche BM25 transitoire basée sur SQLite FTS5, en gardant l'ADR Tantivy comme cible.
 Rationale: livrer l'indexation incrémentale et la purge suppression sans bloquer sur dépendances natives.
 Task: T-004
+Commit: a5581ed
+Impact: medium, module
+Date: 2026-02-19
+
+### [D-005] Séparer backend TUI testable du frontend Textual
+
+Context: besoin d'une TUI rapide avec actions, mais environnement sans dépendances UI garanties.
+Decision: implémenter `tui/backend.py` (index/search/open/citation) et garder `tui/app.py` comme couche interface.
+Rationale: permet validation automatisée des comportements sans lancer l'UI.
+Task: T-005
 Commit: pending
 Impact: medium, module
 Date: 2026-02-19

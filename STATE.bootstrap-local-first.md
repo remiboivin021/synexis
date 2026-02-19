@@ -9,8 +9,10 @@ Executor: codex
 
 # Mission
 
-Bootstraper Synexis Brain avec les fondations documentaires et un moteur DOT minimal exécutable.
-Cette tranche couvre uniquement la documentation socle et le runner DOT avec traçage.
+Construire le socle exécutable local-first de Synexis Brain en suivant l'ordre utilisateur:
+1) TUI BM25-only rapide
+2) BM25 Tantivy
+3) couche vectorielle (embeddings + Qdrant + merge hybride)
 
 ---
 
@@ -43,10 +45,16 @@ Cette tranche couvre uniquement la documentation socle et le runner DOT avec tra
 - docs/governance/adr/*
 - docs/architecture/*
 - synexis_brain/__init__.py
+- synexis_brain/config.py
 - synexis_brain/pipelines/*
-- synexis_brain/indexer/pipeline.py
+- synexis_brain/indexer/*
+- synexis_brain/search/*
+- synexis_brain/tui/*
 - tests/test_pipeline_runner.py
+- tests/test_incremental_indexing.py
+- tests/test_tui_backend.py
 - pyproject.toml
+- .gitignore
 - README.md
 - STATE.bootstrap-local-first.md
 - TODO.bootstrap-local-first.md
@@ -58,9 +66,8 @@ Cette tranche couvre uniquement la documentation socle et le runner DOT avec tra
 
 - .agents/*
 - connector runtime implementation
-- storage schema implementation SQLite/Tantivy/Qdrant
-- scoring/merge behavior implementation beyond ADR specification
-- TUI implementation details
+- connecteurs réseau actifs
+- changements de contrat config incompatibles
 
 ---
 
@@ -92,6 +99,9 @@ Aucune autre worktree active sur ce repo. Risque de collision: faible.
 2. [T-002] Implémenter runner DOT minimal + pipelines example + test hello.
 3. [T-003] Nettoyer les artefacts build locaux (`__pycache__`) et figer `.gitignore`.
 4. [T-004] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25.
+5. [T-005] Implémenter la TUI BM25-only avec preview et actions.
+6. [T-006] Remplacer BM25 bootstrap par BM25 Tantivy.
+7. [T-007] Ajouter embeddings + Qdrant + merge hybride.
 
 ---
 
