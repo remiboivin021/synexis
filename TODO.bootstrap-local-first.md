@@ -19,12 +19,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-007] Ajouter couche vectorielle Qdrant + embeddings + merge hybride
+- [ ] [T-008] Ajouter mode answer (RAG sourcé) dans la TUI
 
 ---
 
 # Next Tasks
-- [ ] [T-008] Ajouter mode answer (RAG sourcé) dans la TUI
+- [ ] [T-010] Ajouter watcher local (one-shot + daemon)
 
 ---
 
@@ -34,6 +34,8 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
+- [x] [T-009] Corriger lenteur indexation et upsert Qdrant non fiable | commit: pending
+- [x] [T-007] Ajouter couche vectorielle Qdrant + embeddings + merge hybride | commit: fedfc57
 - [x] [T-006] Remplacer BM25 bootstrap par BM25 Tantivy | commit: 1e84d45
 - [x] [T-005] Implémenter la TUI BM25-only avec preview et actions | commit: 10b5fa3
 - [x] [T-004] Étendre vers indexation incrémentale SQLite + parse/chunk + BM25 | commit: a5581ed

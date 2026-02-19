@@ -52,10 +52,7 @@ class SearchService:
             context={**ctx, "bm25_backend": self.bm25},
         )
         chunks = out.get("chunks", [])
-        vectors = [
-            self.embedder.embedding_for_chunk(chunk["chunk_hash"], chunk.get("text", ""))
-            for chunk in chunks
-        ]
+        vectors = self.embedder.embeddings_for_chunks(chunks)
         self.vector.upsert(chunks, vectors)
         for item in out.get("changes", {}).get("deleted", []):
             self.vector.delete_file(item["vault_id"], item["path"])

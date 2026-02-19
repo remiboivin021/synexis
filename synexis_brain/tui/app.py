@@ -61,7 +61,8 @@ class SynexisApp(App):
         yield Footer()
 
     async def on_mount(self) -> None:
-        await self.action_reindex()
+        self.query_one("#preview", Static).update("Ready. Press Ctrl+R to reindex.")
+        asyncio.create_task(self.action_reindex())
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "vault":
@@ -79,14 +80,17 @@ class SynexisApp(App):
 
     async def _debounced_search(self) -> None:
         await asyncio.sleep(0.2)
-        query = self.query_one("#search", Input).value
-        self._results = self.service.search(query=query, filters=self.filters)
-        results = self.query_one("#results", ListView)
-        results.clear()
-        for result in self._results:
-            await results.append(ResultItem(result))
-        if self._results:
-            self._update_preview(self._results[0])
+        try:
+            query = self.query_one("#search", Input).value
+            self._results = self.service.search(query=query, filters=self.filters)
+            results = self.query_one("#results", ListView)
+            results.clear()
+            for result in self._results:
+                await results.append(ResultItem(result))
+            if self._results:
+                self._update_preview(self._results[0])
+        except Exception as exc:
+            self.notify(str(exc), title="Search error", severity="error")
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         item = event.item
@@ -105,10 +109,14 @@ class SynexisApp(App):
         preview.update("\n".join(content))
 
     async def action_reindex(self) -> None:
-        changes = self.service.reindex()
+        self.query_one("#preview", Static).update("Indexing in progress...")
+        changes = await asyncio.to_thread(self.service.reindex)
         self.notify(
             f"Indexed new={changes['new']} changed={changes['changed']} deleted={len(changes['deleted'])}",
             title="Synexis",
+        )
+        self.query_one("#preview", Static).update(
+            "Index complete. Type in search box to query your vault."
         )
 
     async def action_open_selected(self) -> None:

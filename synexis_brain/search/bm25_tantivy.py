@@ -25,6 +25,12 @@ class TantivyBm25Index:
         except ModuleNotFoundError as exc:
             raise RuntimeError("Tantivy backend requested but package `tantivy` is not installed") from exc
 
+        # Compatibility gate for the currently installed Python bindings.
+        if not hasattr(tantivy.Index, "parse_query"):
+            raise RuntimeError(
+                "Tantivy backend requested but installed bindings are incompatible (missing Index.parse_query API)"
+            )
+
         self.tantivy = tantivy
         self.schema, self.fields = self._build_schema(tantivy)
         self.index = self._open_or_create_index()
@@ -72,30 +78,42 @@ class TantivyBm25Index:
                 )
             )
         writer.commit()
+        if hasattr(self.index, "reload"):
+            self.index.reload()
 
     def delete_file(self, vault_id: str, path: str) -> None:
         writer = self._writer()
         self._delete_by_term(writer, "vault_id", str(vault_id))
         self._delete_by_term(writer, "path", str(path))
         writer.commit()
+        if hasattr(self.index, "reload"):
+            self.index.reload()
 
     def _delete_by_chunk_id(self, writer: Any, chunk_id: str) -> None:
         self._delete_by_term(writer, "chunk_id", str(chunk_id))
 
     def _delete_by_term(self, writer: Any, field_name: str, value: str) -> None:
-        term = self.tantivy.Term(self.fields[field_name], value)
-        writer.delete_term(term)
+        # Binding compatibility: current tantivy exposes delete_documents_by_term(field, value).
+        if hasattr(writer, "delete_documents_by_term"):
+            writer.delete_documents_by_term(field_name, value)
+            return
+        if hasattr(writer, "delete_documents"):
+            writer.delete_documents(field_name, value)
+            return
+        raise RuntimeError("Tantivy writer does not expose term-delete APIs")
 
     def topk(self, query: str, limit: int = 20) -> list[dict[str, Any]]:
+        if hasattr(self.index, "reload"):
+            self.index.reload()
         searcher = self.index.searcher()
-        parser = self.tantivy.QueryParser(self.index, [self.fields["text"], self.fields["heading"]])
-        q = parser.parse_query(query)
+        q = self.index.parse_query(query, default_field_names=["text", "heading"])
         hits = searcher.search(q, limit)
 
         results: list[dict[str, Any]] = []
         for score, doc_address in hits.hits:
             doc = searcher.doc(doc_address)
-            data = {k: _first(doc.get(self.fields[k])) for k in self.fields}
+            doc_map = doc.to_dict() if hasattr(doc, "to_dict") else {}
+            data = {k: _first(doc_map.get(k)) for k in self.fields}
             results.append(
                 {
                     "chunk_id": data["chunk_id"],

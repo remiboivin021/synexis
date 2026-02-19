@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import math
 import sqlite3
 from typing import Any
@@ -54,6 +55,54 @@ class EmbeddingService:
         return [float(x) for x in vector]
 
     def embedding_for_chunk(self, chunk_hash: str, text: str) -> list[float]:
+        return self.embeddings_for_chunks([{"chunk_hash": chunk_hash, "text": text}])[0]
+
+    def embeddings_for_chunks(self, chunks: list[dict[str, Any]]) -> list[list[float]]:
+        if not chunks:
+            return []
+
+        hashes = [str(chunk["chunk_hash"]) for chunk in chunks]
+        placeholders = ",".join("?" for _ in hashes)
+        cached_rows = self.conn.execute(
+            f"SELECT chunk_hash, embedding FROM embedding_cache WHERE chunk_hash IN ({placeholders})",
+            tuple(hashes),
+        ).fetchall()
+        cached = {row[0]: [float(x) for x in row[1].split(",") if x] for row in cached_rows}
+
+        missing_hashes: list[str] = []
+        missing_texts: list[str] = []
+        for chunk in chunks:
+            chunk_hash = str(chunk["chunk_hash"])
+            if chunk_hash not in cached:
+                missing_hashes.append(chunk_hash)
+                missing_texts.append(str(chunk.get("text", "")))
+
+        generated: dict[str, list[float]] = {}
+        if missing_hashes:
+            model = self._model_or_none()
+            if model is None:
+                vectors = [_hash_embedding(text) for text in missing_texts]
+            else:
+                encoded = model.encode(missing_texts, batch_size=32, show_progress_bar=False)
+                vectors = [[float(v) for v in row] for row in encoded]
+
+            payload = []
+            for chunk_hash, vector in zip(missing_hashes, vectors):
+                generated[chunk_hash] = vector
+                payload.append((chunk_hash, ",".join(repr(float(x)) for x in vector)))
+            self.conn.executemany(
+                "INSERT OR REPLACE INTO embedding_cache (chunk_hash, embedding) VALUES (?, ?)",
+                payload,
+            )
+            self.conn.commit()
+
+        out: list[list[float]] = []
+        for chunk in chunks:
+            chunk_hash = str(chunk["chunk_hash"])
+            out.append(cached.get(chunk_hash) or generated[chunk_hash])
+        return out
+
+    def _legacy_embedding_for_chunk(self, chunk_hash: str, text: str) -> list[float]:
         row = self.conn.execute(
             "SELECT embedding FROM embedding_cache WHERE chunk_hash = ?", (chunk_hash,)
         ).fetchone()
@@ -80,6 +129,7 @@ class VectorStore:
         self.prefer_qdrant = bool(vector_cfg.get("prefer_qdrant", True))
 
         self.mode = "sqlite"
+        self.log = logging.getLogger("synexis.search.vector")
         self.client = None
         if self.enabled and self.prefer_qdrant:
             try:
@@ -87,8 +137,14 @@ class VectorStore:
             except ModuleNotFoundError:
                 self.client = None
             else:
-                self.client = QdrantClient(url=self.url)
-                self.mode = "qdrant"
+                try:
+                    self.client = QdrantClient(url=self.url, timeout=2.0)
+                    self.client.get_collections()
+                    self.mode = "qdrant"
+                except Exception as exc:
+                    self.client = None
+                    self.mode = "sqlite"
+                    self.log.warning("Qdrant unavailable at %s: %s; fallback sqlite vector store", self.url, exc)
 
         self.conn.execute(
             """
@@ -111,8 +167,12 @@ class VectorStore:
         if not self.enabled:
             return
         if self.mode == "qdrant" and self.client is not None:
-            self._qdrant_upsert(chunks, vectors)
-            return
+            try:
+                self._qdrant_upsert(chunks, vectors)
+                return
+            except Exception as exc:
+                self.log.warning("Qdrant upsert failed: %s; fallback sqlite vector store", exc)
+                self.mode = "sqlite"
 
         for chunk, vector in zip(chunks, vectors):
             self.conn.execute(
@@ -137,18 +197,22 @@ class VectorStore:
 
     def delete_file(self, vault_id: str, path: str) -> None:
         if self.mode == "qdrant" and self.client is not None:
-            self.client.delete(
-                collection_name=self.collection,
-                points_selector={
-                    "filter": {
-                        "must": [
-                            {"key": "vault_id", "match": {"value": vault_id}},
-                            {"key": "path", "match": {"value": path}},
-                        ]
-                    }
-                },
-            )
-            return
+            try:
+                self.client.delete(
+                    collection_name=self.collection,
+                    points_selector={
+                        "filter": {
+                            "must": [
+                                {"key": "vault_id", "match": {"value": vault_id}},
+                                {"key": "path", "match": {"value": path}},
+                            ]
+                        }
+                    },
+                )
+                return
+            except Exception as exc:
+                self.log.warning("Qdrant delete failed: %s; fallback sqlite vector store", exc)
+                self.mode = "sqlite"
         self.conn.execute("DELETE FROM vector_chunks WHERE vault_id = ? AND path = ?", (vault_id, path))
         self.conn.commit()
 
@@ -156,29 +220,33 @@ class VectorStore:
         if not self.enabled:
             return []
         if self.mode == "qdrant" and self.client is not None:
-            points = self.client.search(
-                collection_name=self.collection,
-                query_vector=query_vector,
-                limit=limit,
-                with_payload=True,
-            )
-            out: list[dict[str, Any]] = []
-            for point in points:
-                payload = point.payload or {}
-                out.append(
-                    {
-                        "chunk_id": payload.get("chunk_id", ""),
-                        "vault_id": payload.get("vault_id", ""),
-                        "path": payload.get("path", ""),
-                        "heading": payload.get("heading", ""),
-                        "preview": str(payload.get("text", ""))[:240],
-                        "score": float(point.score),
-                        "tags": payload.get("tags", ""),
-                        "type": payload.get("type", ""),
-                        "status": payload.get("status", ""),
-                    }
+            try:
+                points = self.client.search(
+                    collection_name=self.collection,
+                    query_vector=query_vector,
+                    limit=limit,
+                    with_payload=True,
                 )
-            return out
+                out: list[dict[str, Any]] = []
+                for point in points:
+                    payload = point.payload or {}
+                    out.append(
+                        {
+                            "chunk_id": payload.get("chunk_id", ""),
+                            "vault_id": payload.get("vault_id", ""),
+                            "path": payload.get("path", ""),
+                            "heading": payload.get("heading", ""),
+                            "preview": str(payload.get("text", ""))[:240],
+                            "score": float(point.score),
+                            "tags": payload.get("tags", ""),
+                            "type": payload.get("type", ""),
+                            "status": payload.get("status", ""),
+                        }
+                    )
+                return out
+            except Exception as exc:
+                self.log.warning("Qdrant search failed: %s; fallback sqlite vector store", exc)
+                self.mode = "sqlite"
 
         rows = self.conn.execute(
             "SELECT chunk_id, vault_id, path, heading, tags, type, status, text, embedding FROM vector_chunks"
@@ -211,11 +279,10 @@ class VectorStore:
         except ModuleNotFoundError:
             return
 
-        if vectors:
-            self.client.recreate_collection(
-                collection_name=self.collection,
-                vectors_config=VectorParams(size=len(vectors[0]), distance=Distance.COSINE),
-            )
+        if not vectors:
+            return
+
+        self._ensure_qdrant_collection(vector_size=len(vectors[0]), distance=Distance.COSINE, vector_params=VectorParams)
 
         points = []
         for chunk, vector in zip(chunks, vectors):
@@ -232,6 +299,17 @@ class VectorStore:
             points.append(PointStruct(id=chunk["chunk_id"], vector=vector, payload=payload))
         if points:
             self.client.upsert(collection_name=self.collection, points=points)
+
+    def _ensure_qdrant_collection(self, vector_size: int, distance: Any, vector_params: Any) -> None:
+        if self.client is None:
+            return
+        try:
+            self.client.get_collection(self.collection)
+        except Exception:
+            self.client.create_collection(
+                collection_name=self.collection,
+                vectors_config=vector_params(size=vector_size, distance=distance),
+            )
 
 
 def _hash_embedding(text: str, dim: int = 64) -> list[float]:

@@ -73,6 +73,26 @@ Context: activation vectorielle demandée mais dépendances externes (Qdrant/Sen
 Decision: implémenter Qdrant + embeddings avec fallback local (SQLite + embedding hash déterministe) activable via config.
 Rationale: conserver un mode opérable et testable tout en préparant l'activation complète en environnement équipé.
 Task: T-007
+Commit: fedfc57
+Impact: high, module
+Date: 2026-02-19
+
+### [D-008] Accélérer embeddings par batch + cache transactionnel
+
+Context: indexation trop lente sur vault volumineux.
+Decision: encoder les chunks manquants en batch et persister le cache embeddings en une transaction.
+Rationale: réduire drastiquement le coût CPU/IO par chunk et rendre l'indexation initiale praticable.
+Task: T-009
+Commit: pending
+Impact: high, module
+Date: 2026-02-19
+
+### [D-009] Adapter Tantivy/Qdrant aux APIs runtime observées
+
+Context: bindings Tantivy installés sans `QueryParser`/`Term`, et collection Qdrant non peuplée de façon fiable.
+Decision: utiliser `Index.parse_query`, `delete_documents_by_term`, `index.reload()`, et un upsert Qdrant incrémental sans `recreate_collection`.
+Rationale: éviter les crashs, conserver les points existants et fiabiliser la présence d'objets côté Qdrant.
+Task: T-009
 Commit: pending
 Impact: high, module
 Date: 2026-02-19
