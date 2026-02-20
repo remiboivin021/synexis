@@ -191,7 +191,8 @@ def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Any, os_c
     cache_path.write_text(extracted, encoding="utf-8")
 
     delete_doc_chunks_os(os_client, cfg.opensearch.index_name, doc_id)
-    delete_doc_vectors(q_client, cfg.qdrant.collection_name, doc_id)
+    if q_client is not None:
+        delete_doc_vectors(q_client, cfg.qdrant.collection_name, doc_id)
     db.delete_doc_chunks(doc_id)
 
     chunks = split_into_chunks(
@@ -226,7 +227,7 @@ def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Any, os_c
     index_chunks(os_client, cfg.opensearch.index_name, chunk_payloads)
 
     partial = False
-    if chunk_texts:
+    if chunk_texts and embedder is not None and q_client is not None:
         try:
             vectors = embedder.encode_passages(chunk_texts, batch_size=cfg.embeddings.batch_size).tolist()
             upsert_vectors(q_client, cfg.qdrant.collection_name, vectors, chunk_payloads)
@@ -271,7 +272,8 @@ def _delete_removed_docs(db: MetadataDB, current_paths: set[str], cfg: AppConfig
             continue
         doc_id = row["doc_id"]
         delete_doc_chunks_os(os_client, cfg.opensearch.index_name, doc_id)
-        delete_doc_vectors(q_client, cfg.qdrant.collection_name, doc_id)
+        if q_client is not None:
+            delete_doc_vectors(q_client, cfg.qdrant.collection_name, doc_id)
         db.delete_doc_chunks(doc_id)
         db.delete_document(doc_id)
         removed += 1
@@ -283,9 +285,8 @@ def ingest(
     config: str = typer.Option("config.yaml", "--config"),
     force: bool = typer.Option(False, "--force"),
     debug: bool = typer.Option(False, "--debug"),
+    no_vector: bool = typer.Option(False, "--no-vector", help="Skip embedding and vector indexing (BM25-only ingest)."),
 ) -> None:
-    from searchctl.embeddings import Embedder
-
     configure_logging(debug=debug)
     cfg = load_config(config)
     if force:
@@ -295,28 +296,33 @@ def ingest(
     db.init_schema()
 
     os_client = make_opensearch_client(cfg.opensearch.url)
-    q_client = make_qdrant_client(cfg.qdrant.url)
+    q_client = None if no_vector else make_qdrant_client(cfg.qdrant.url)
 
     if not opensearch_ready(os_client):
         typer.echo("OpenSearch not ready")
         raise typer.Exit(1)
-    if not qdrant_ready(q_client):
+    if q_client is not None and not qdrant_ready(q_client):
         typer.echo("Qdrant not ready")
         raise typer.Exit(1)
 
     ensure_index(os_client, cfg.opensearch.index_name)
-    ensure_collection(q_client, cfg.qdrant.collection_name, cfg.qdrant.vector_size, cfg.qdrant.distance)
-    try:
-        probe_collection_write(q_client, cfg.qdrant.collection_name, cfg.qdrant.vector_size)
-    except Exception as exc:
-        typer.echo(f"Qdrant write check failed: {exc}")
-        raise typer.Exit(1)
+    if q_client is not None:
+        ensure_collection(q_client, cfg.qdrant.collection_name, cfg.qdrant.vector_size, cfg.qdrant.distance)
+        try:
+            probe_collection_write(q_client, cfg.qdrant.collection_name, cfg.qdrant.vector_size)
+        except Exception as exc:
+            typer.echo(f"Qdrant write check failed: {exc}")
+            raise typer.Exit(1)
 
     paths = discover_files(cfg.roots, cfg.include_extensions, cfg.exclude_globs)
     path_set = {str(p) for p in paths}
     removed = _delete_removed_docs(db, path_set, cfg, os_client, q_client)
 
-    embedder = Embedder(cfg.embeddings.model_name, cfg.embeddings.device)
+    embedder = None
+    if not no_vector:
+        from searchctl.embeddings import Embedder
+
+        embedder = Embedder(cfg.embeddings.model_name, cfg.embeddings.device)
 
     indexed = 0
     skipped = 0

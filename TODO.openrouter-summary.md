@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] (none)
+- [ ] [T-006] add safe ingest mode without vector embeddings
 
 ---
 
@@ -41,3 +41,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-003] add tests/docs and verify behavior | commit: 1bdd5bb
 - [x] [T-004] prevent summarize segfault by avoiding eager embedding load | commit: e867da8
 - [x] [T-005] fix qdrant probe import mismatch in openrouter branch | commit: 2cd080e
+- [x] [T-006] add safe ingest mode without vector embeddings | commit: pending

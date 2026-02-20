@@ -56,3 +56,13 @@ Task: T-005
 Commit: 2cd080e
 Impact: low, localized
 Date: 2026-02-20
+
+### [D-006] Add BM25-only ingest fallback flag
+
+Context: Segmentation faults can occur when loading embedding runtime in some local environments.
+Decision: Add `--no-vector` to ingest, skipping embedding and Qdrant writes.
+Rationale: Provides stable indexing path and unblocks search/summarize workflows.
+Task: T-006
+Commit: pending
+Impact: medium, module
+Date: 2026-02-20

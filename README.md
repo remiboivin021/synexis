@@ -91,6 +91,8 @@ By default summarize mode uses BM25-only retrieval to avoid heavy embedding runt
 - Model download/runtime issues:
   - First embedding run downloads the sentence-transformers model.
   - Use CPU by setting `embeddings.device: cpu` in config when needed.
+  - If ingest crashes in embedding runtime, run BM25-only ingest:
+  - `searchctl ingest --config config.yaml --no-vector`
 
 - Editable install fails with `ModuleNotFoundError: No module named 'setuptools'`:
   - Install build backend dependencies in the active venv:
