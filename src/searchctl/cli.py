@@ -6,7 +6,6 @@ import re
 import time
 import unicodedata
 from pathlib import Path
-
 import typer
 from opensearchpy.exceptions import NotFoundError
 
@@ -20,6 +19,7 @@ from searchctl.fusion import rrf_fuse
 from searchctl.hashing import make_chunk_id, make_doc_id, sha256_text
 from searchctl.inspect import inspect_chunk
 from searchctl.logging import configure_logging
+from searchctl.llm_openrouter import OpenRouterConfig, call_openrouter_summary
 from searchctl.metadata.db import MetadataDB
 from searchctl.opensearch.client import make_client as make_opensearch_client
 from searchctl.opensearch.client import wait_ready as opensearch_ready
@@ -30,7 +30,9 @@ from searchctl.qdrant.client import make_client as make_qdrant_client
 from searchctl.qdrant.client import wait_ready as qdrant_ready
 from searchctl.qdrant.collections import delete_doc_vectors, ensure_collection, probe_collection_write, upsert_vectors
 from searchctl.qdrant.queries import vector_search
+from searchctl.prompts import build_summary_user_prompt
 from searchctl.snippets import build_snippet
+from searchctl.summary import collect_sources, format_sources, summary_input_rows
 
 app = typer.Typer(help="Local personal search CLI")
 LOG = logging.getLogger("searchctl")
@@ -87,6 +89,18 @@ def _format_search_results(query: str, rows: list[dict]) -> str:
             ]
         )
     return "\n".join(lines).rstrip()
+
+
+def _summarize_with_openrouter(query: str, rows: list[dict[str, Any]], cfg: AppConfig, top_n: int) -> str:
+    summary_input = summary_input_rows(rows, top_n)
+    prompt = build_summary_user_prompt(query, summary_input)
+    llm_cfg = OpenRouterConfig(
+        base_url=cfg.llm.base_url,
+        model=cfg.llm.model,
+        api_key=cfg.llm.api_key,
+        app_name="searchctl",
+    )
+    return call_openrouter_summary(llm_cfg, prompt)
 
 
 def _normalize_text(text: str) -> str:
@@ -352,6 +366,8 @@ def search(
         "--must-contain",
         help="Repeatable required term(s) that must appear in title/path/text.",
     ),
+    summarize: bool = typer.Option(False, "--summarize", help="Generate a human-readable synthesis with OpenRouter."),
+    summary_top_k: int = typer.Option(8, "--summary-top-k", help="How many ranked results are provided to LLM summary."),
 ) -> None:
     cfg = load_config(config)
     os_client = make_opensearch_client(cfg.opensearch.url)
@@ -444,6 +460,21 @@ def search(
         )
         if len(result_rows) >= limit:
             break
+
+    if summarize:
+        sources = collect_sources(result_rows)
+        if not result_rows:
+            summary = f"Aucun resultat pour la requete: {query}"
+        else:
+            summary = _summarize_with_openrouter(query, result_rows, cfg, summary_top_k)
+
+        if json_out:
+            _to_json({"query": query, "summary": summary, "sources": sources, "results": result_rows}, True)
+        else:
+            typer.echo(summary.rstrip())
+            typer.echo("")
+            typer.echo(format_sources(sources))
+        return
 
     if json_out:
         _to_json(result_rows, True)

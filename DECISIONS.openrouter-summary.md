@@ -16,3 +16,13 @@ Task: T-001
 Commit: pending
 Impact: medium, module
 Date: 2026-02-20
+
+### [D-002] Add summary mode in search with guaranteed source list
+
+Context: User needs human-readable synthesis and explicit sources at the end.
+Decision: Add `--summarize` to search, generate synthesis via OpenRouter prompt, and append `Sources`.
+Rationale: Preserves existing retrieval pipeline while adding understandable output layer.
+Task: T-002
+Commit: pending
+Impact: medium, module
+Date: 2026-02-20
