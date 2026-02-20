@@ -43,6 +43,6 @@ Context: User observed process-level segmentation fault when running summarize w
 Decision: Avoid eager embedding import and disable vector retrieval by default in summarize mode.
 Rationale: Keeps summarize path stable; hybrid mode remains available via `--summary-use-hybrid`.
 Task: T-004
-Commit: pending
+Commit: e867da8
 Impact: medium, module
 Date: 2026-02-20
