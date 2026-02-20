@@ -42,4 +42,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-004] finalize docs/config/compose and run verification | commit: 914729a
 - [x] [T-005] improve default search output readability | commit: 8016484
 - [x] [T-006] build document map during ingest and persist metadata | commit: 1a60662
-- [x] [T-007] add map-aware ranking and filters for project queries | commit: pending
+- [x] [T-007] add map-aware ranking and filters for project queries | commit: d6586c3

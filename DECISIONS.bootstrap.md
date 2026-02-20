@@ -53,6 +53,6 @@ Context: Generic hybrid scores still surfaced out-of-context notes for project i
 Decision: Add map-based score boosts and query filters (`--scope`, `--active-only`) in `search`.
 Rationale: Keeps hybrid retrieval while adding deterministic intent alignment.
 Task: T-007
-Commit: pending
+Commit: d6586c3
 Impact: medium, module
 Date: 2026-02-20
