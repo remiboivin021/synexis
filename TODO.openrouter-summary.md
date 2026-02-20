@@ -20,12 +20,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-003] add tests/docs and verify behavior
+- [ ] (none)
 
 ---
 
 # Next Tasks
-- [ ] [T-003] add tests/docs and verify behavior
+- [ ] (none)
 
 ---
 
@@ -38,3 +38,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-000] bootstrap feature worktree and contracts | commit: pending
 - [x] [T-001] add openrouter config, provider, and prompt templates | commit: pending
 - [x] [T-002] integrate summary mode in search command with sources output | commit: pending
+- [x] [T-003] add tests/docs and verify behavior | commit: pending

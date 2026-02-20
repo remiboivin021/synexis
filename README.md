@@ -37,6 +37,7 @@ searchctl ingest --config config.yaml
 ```bash
 searchctl search "your query" --config config.yaml
 searchctl search "your query" --config config.yaml --json
+searchctl search "your query" --config config.yaml --summarize
 ```
 
 ## Config Setup
@@ -50,10 +51,31 @@ searchctl search "your query" --config config.yaml --json
 
 ```bash
 searchctl ingest [--config <path>] [--force]
-searchctl search "<query>" [--json] [--top N] [--collapse-by-doc] [--source-type <t>] [--path-contains <s>]
+searchctl search "<query>" [--json] [--top N] [--collapse-by-doc] [--source-type <t>] [--path-contains <s>] [--summarize] [--summary-top-k N]
 searchctl status [--json]
 searchctl inspect --doc "<path>" | --chunk "<chunk_id>" [--json]
 ```
+
+## OpenRouter Summary
+
+Configure OpenRouter in `config.yaml`:
+
+```yaml
+llm:
+  provider: "openrouter"
+  base_url: "https://openrouter.ai/api/v1"
+  model: "openrouter/auto"
+  api_key: "" # optional if OPENROUTER_API_KEY is set
+```
+
+Run:
+
+```bash
+export OPENROUTER_API_KEY="your-key"
+searchctl search "positionnement freelance" --config config.yaml --summarize
+```
+
+`--summarize` prints a human-readable synthesis followed by a `Sources` section.
 
 ## Troubleshooting
 

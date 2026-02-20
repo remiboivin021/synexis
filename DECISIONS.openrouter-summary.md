@@ -26,3 +26,13 @@ Task: T-002
 Commit: pending
 Impact: medium, module
 Date: 2026-02-20
+
+### [D-003] Keep summarization opt-in and preserve default search output
+
+Context: Existing search users expect direct ranked results unless explicitly asking for synthesis.
+Decision: Add `--summarize` as opt-in mode; no behavior change for default and `--json` modes.
+Rationale: Backward compatibility while enabling LLM-based summary workflow.
+Task: T-003
+Commit: pending
+Impact: low, module
+Date: 2026-02-20
