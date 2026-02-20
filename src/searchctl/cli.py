@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
+import unicodedata
 from pathlib import Path
 
 import typer
@@ -10,6 +12,7 @@ from opensearchpy.exceptions import NotFoundError
 
 from searchctl.chunking import split_into_chunks
 from searchctl.config import AppConfig, load_config
+from searchctl.document_map import classify_document, write_document_map
 from searchctl.embeddings import Embedder
 from searchctl.extractors import extract_markdown, extract_pdf, extract_text
 from searchctl.fs_scanner import discover_files
@@ -31,6 +34,7 @@ from searchctl.snippets import build_snippet
 
 app = typer.Typer(help="Local personal search CLI")
 LOG = logging.getLogger("searchctl")
+STOPWORDS_FR = {"de", "des", "du", "la", "le", "les", "un", "une", "et", "en", "dans", "sur", "pour", "au", "aux"}
 
 
 def _extract(path: Path) -> tuple[str, str, str]:
@@ -85,6 +89,51 @@ def _format_search_results(query: str, rows: list[dict]) -> str:
     return "\n".join(lines).rstrip()
 
 
+def _normalize_text(text: str) -> str:
+    no_accents = "".join(ch for ch in unicodedata.normalize("NFKD", text) if not unicodedata.combining(ch))
+    return no_accents.lower()
+
+
+def _query_terms(query: str) -> list[str]:
+    terms = []
+    for raw in _normalize_text(query).replace('"', " ").replace("'", " ").split():
+        token = raw.strip(".,:;!?()[]{}")
+        if len(token) < 3 or token in STOPWORDS_FR:
+            continue
+        terms.append(token)
+    return terms
+
+
+def _matches_terms(payload: dict, required_terms: list[str]) -> bool:
+    if not required_terms:
+        return True
+    haystack = _normalize_text(
+        " ".join(
+            [
+                str(payload.get("title") or ""),
+                str(payload.get("path") or ""),
+                str(payload.get("text") or ""),
+            ]
+        )
+    )
+    words = set(re.findall(r"[a-z0-9_]+", haystack))
+    return all(term in words for term in required_terms)
+
+
+def _project_intent_guard(query: str, payload: dict) -> bool:
+    q = _normalize_text(query)
+    wants_project = "projet" in q or "project" in q
+    wants_active = ("en cours" in q) or ("actif" in q) or ("active" in q) or ("current" in q)
+    if not (wants_project and wants_active):
+        return True
+    title = _normalize_text(str(payload.get("title") or ""))
+    path = _normalize_text(str(payload.get("path") or ""))
+    text = _normalize_text(str(payload.get("text") or ""))
+    is_project_doc = ("03_projects" in path) or ("project" in title) or ("projet" in title)
+    is_active_doc = ("en cours" in text) or ("actif" in text) or ("active" in text) or ("current" in text)
+    return is_project_doc and is_active_doc
+
+
 def _write_doc_error(db: MetadataDB, path: Path, doc_id: str, source_type: str, err: Exception) -> None:
     now = int(time.time())
     db.log_error("extract", str(err), path=str(path), doc_id=doc_id)
@@ -103,7 +152,7 @@ def _write_doc_error(db: MetadataDB, path: Path, doc_id: str, source_type: str, 
     )
 
 
-def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Embedder, os_client, q_client) -> str:
+def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Embedder, os_client, q_client) -> dict:
     doc_id = make_doc_id(path)
     mtime = int(path.stat().st_mtime)
 
@@ -112,13 +161,15 @@ def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Embedder,
     except Exception as exc:
         source_type = "pdf" if path.suffix.lower() == ".pdf" else "text"
         _write_doc_error(db, path, doc_id, source_type, exc)
-        return "error"
+        return {"status": "error", "map_entry": classify_document(str(path), path.stem, "")}
+
+    map_entry = classify_document(str(path), title, extracted)
 
     content_hash = sha256_text(extracted)
 
     existing = db.get_document(doc_id)
     if cfg.indexing.reindex_policy == "incremental" and existing and existing["content_hash"] == content_hash:
-        return "skipped"
+        return {"status": "skipped", "map_entry": map_entry}
 
     cache_dir = Path(cfg.metadata.extracted_text_cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -152,6 +203,8 @@ def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Embedder,
             "end_char": c.end_char,
             "heading_path": c.heading_path,
             "mtime": mtime,
+            "doc_scope": map_entry["scope"],
+            "doc_active": map_entry["active"],
         }
         chunk_payloads.append(payload)
         chunk_texts.append(c.text)
@@ -194,7 +247,7 @@ def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Embedder,
                 "heading_path": p["heading_path"],
             }
         )
-    return "partial" if partial else "indexed"
+    return {"status": "partial" if partial else "indexed", "map_entry": map_entry}
 
 
 def _delete_removed_docs(db: MetadataDB, current_paths: set[str], cfg: AppConfig, os_client, q_client) -> int:
@@ -253,9 +306,13 @@ def ingest(
     skipped = 0
     errors = 0
     partial = 0
+    map_entries: list[dict] = []
 
     for path in paths:
-        status = _process_one(path, cfg, db, embedder, os_client, q_client)
+        result = _process_one(path, cfg, db, embedder, os_client, q_client)
+        status = result["status"]
+        if result.get("map_entry"):
+            map_entries.append(result["map_entry"])
         if status == "indexed":
             indexed += 1
         elif status == "partial":
@@ -264,6 +321,9 @@ def ingest(
             skipped += 1
         else:
             errors += 1
+
+    map_path = Path(cfg.metadata.sqlite_path).parent / "document_map.json"
+    write_document_map(map_entries, map_path)
 
     db.commit()
     typer.echo(
@@ -280,6 +340,12 @@ def search(
     collapse_by_doc: bool = typer.Option(False, "--collapse-by-doc"),
     source_type: str | None = typer.Option(None, "--source-type"),
     path_contains: str | None = typer.Option(None, "--path-contains"),
+    strict: bool = typer.Option(False, "--strict", help="Require lexical term match for each result."),
+    must_contain: list[str] = typer.Option(
+        None,
+        "--must-contain",
+        help="Repeatable required term(s) that must appear in title/path/text.",
+    ),
 ) -> None:
     cfg = load_config(config)
     os_client = make_opensearch_client(cfg.opensearch.url)
@@ -314,6 +380,9 @@ def search(
 
     fused = rrf_fuse(bm25, vec, cfg.search.rrf_k)
     limit = top or cfg.search.return_top_n
+    strict_terms = _query_terms(query) if strict else []
+    explicit_terms = [_normalize_text(t) for t in (must_contain or []) if t.strip()]
+    required_terms = strict_terms + explicit_terms
     result_rows = []
     seen_docs: set[str] = set()
     for rank, row in enumerate(fused, start=1):
@@ -321,6 +390,10 @@ def search(
         if source_type and payload.get("source_type") != source_type:
             continue
         if path_contains and path_contains not in payload.get("path", ""):
+            continue
+        if not _matches_terms(payload, required_terms):
+            continue
+        if strict and not _project_intent_guard(query, payload):
             continue
         if collapse_by_doc and payload.get("doc_id") in seen_docs:
             continue

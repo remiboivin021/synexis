@@ -20,12 +20,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-005] improve default search output readability
+- [ ] [T-007] add map-aware ranking and filters for project queries
 
 ---
 
 # Next Tasks
-- [ ] (none)
+- [ ] [T-007] add map-aware ranking and filters for project queries
 
 ---
 
@@ -41,3 +41,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-003] implement tests and fixture validation flows | commit: c56cfad
 - [x] [T-004] finalize docs/config/compose and run verification | commit: 914729a
 - [x] [T-005] improve default search output readability | commit: 8016484
+- [x] [T-006] build document map during ingest and persist metadata | commit: pending

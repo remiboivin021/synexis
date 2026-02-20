@@ -36,3 +36,13 @@ Task: T-005
 Commit: 8016484
 Impact: low, module
 Date: 2026-02-20
+
+### [D-004] Persist a document map during ingest
+
+Context: Query intent like "projets en cours" needs document-level signals beyond chunk text.
+Decision: Classify each document at ingest time and persist `document_map.json` in the data directory.
+Rationale: Enables deterministic scope/activity-aware ranking and filtering without introducing a new DB schema.
+Task: T-006
+Commit: pending
+Impact: medium, module
+Date: 2026-02-20
