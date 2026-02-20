@@ -13,7 +13,7 @@ Context: Need provider-level integration with deterministic output shape.
 Decision: Implement a dedicated OpenRouter client module and prompt builder module.
 Rationale: Keeps CLI logic clean and testable while making prompt strategy explicit.
 Task: T-001
-Commit: pending
+Commit: 94d5d68
 Impact: medium, module
 Date: 2026-02-20
 
@@ -23,7 +23,7 @@ Context: User needs human-readable synthesis and explicit sources at the end.
 Decision: Add `--summarize` to search, generate synthesis via OpenRouter prompt, and append `Sources`.
 Rationale: Preserves existing retrieval pipeline while adding understandable output layer.
 Task: T-002
-Commit: pending
+Commit: af13bb9
 Impact: medium, module
 Date: 2026-02-20
 
@@ -33,6 +33,6 @@ Context: Existing search users expect direct ranked results unless explicitly as
 Decision: Add `--summarize` as opt-in mode; no behavior change for default and `--json` modes.
 Rationale: Backward compatibility while enabling LLM-based summary workflow.
 Task: T-003
-Commit: pending
+Commit: 1bdd5bb
 Impact: low, module
 Date: 2026-02-20
