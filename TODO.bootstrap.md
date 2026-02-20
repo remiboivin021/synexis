@@ -40,4 +40,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-002] implement core ingestion and search modules with CLI commands | commit: 0558c51
 - [x] [T-003] implement tests and fixture validation flows | commit: c56cfad
 - [x] [T-004] finalize docs/config/compose and run verification | commit: 914729a
-- [x] [T-005] improve default search output readability | commit: pending
+- [x] [T-005] improve default search output readability | commit: 8016484

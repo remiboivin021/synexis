@@ -33,6 +33,6 @@ Context: Default `search` output was raw Python dict/list text and hard to read 
 Decision: Add a dedicated human formatter for `search` default mode and keep `--json` unchanged.
 Rationale: Improves UX without breaking machine consumers.
 Task: T-005
-Commit: pending
+Commit: 8016484
 Impact: low, module
 Date: 2026-02-20
