@@ -63,6 +63,6 @@ Context: Segmentation faults can occur when loading embedding runtime in some lo
 Decision: Add `--no-vector` to ingest, skipping embedding and Qdrant writes.
 Rationale: Provides stable indexing path and unblocks search/summarize workflows.
 Task: T-006
-Commit: pending
+Commit: 7b44af8
 Impact: medium, module
 Date: 2026-02-20
