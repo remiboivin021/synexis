@@ -26,3 +26,13 @@ Task: T-004
 Commit: 914729a
 Impact: low, localized
 Date: 2026-02-20
+
+### [D-003] Keep JSON contract and add readable text rendering for search
+
+Context: Default `search` output was raw Python dict/list text and hard to read in terminal usage.
+Decision: Add a dedicated human formatter for `search` default mode and keep `--json` unchanged.
+Rationale: Improves UX without breaking machine consumers.
+Task: T-005
+Commit: pending
+Impact: low, module
+Date: 2026-02-20

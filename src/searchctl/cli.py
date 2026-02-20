@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 import typer
+from opensearchpy.exceptions import NotFoundError
 
 from searchctl.chunking import split_into_chunks
 from searchctl.config import AppConfig, load_config
@@ -24,7 +25,7 @@ from searchctl.opensearch.index import ensure_index, index_chunks
 from searchctl.opensearch.queries import bm25_search
 from searchctl.qdrant.client import make_client as make_qdrant_client
 from searchctl.qdrant.client import wait_ready as qdrant_ready
-from searchctl.qdrant.collections import delete_doc_vectors, ensure_collection, upsert_vectors
+from searchctl.qdrant.collections import delete_doc_vectors, ensure_collection, probe_collection_write, upsert_vectors
 from searchctl.qdrant.queries import vector_search
 from searchctl.snippets import build_snippet
 
@@ -51,6 +52,37 @@ def _to_json(data: dict | list, as_json: bool) -> None:
         typer.echo(json.dumps(data, ensure_ascii=False, indent=2))
     else:
         typer.echo(data)
+
+
+def _format_search_results(query: str, rows: list[dict]) -> str:
+    if not rows:
+        return f"No results for query: {query}"
+
+    lines = [f'Results for: "{query}"', ""]
+    for row in rows:
+        citation = row.get("citation", {})
+        signals = row.get("signals", {})
+        lines.extend(
+            [
+                f'[{row.get("rank")}] {row.get("doc_title") or "(untitled)"}',
+                f'  score: {float(row.get("score", 0.0)):.6f}',
+                f'  path: {row.get("doc_path") or "-"}',
+                f'  snippet: {row.get("snippet") or ""}',
+                (
+                    "  citation: "
+                    f'{citation.get("chunk_id")} '
+                    f'[{citation.get("start_char")}:{citation.get("end_char")}]'
+                ),
+                (
+                    "  signals: "
+                    f'bm25_rank={signals.get("bm25_rank")} '
+                    f'vector_rank={signals.get("vector_rank")} '
+                    f'fusion={signals.get("fusion_method")}'
+                ),
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip()
 
 
 def _write_doc_error(db: MetadataDB, path: Path, doc_id: str, source_type: str, err: Exception) -> None:
@@ -205,6 +237,11 @@ def ingest(
 
     ensure_index(os_client, cfg.opensearch.index_name)
     ensure_collection(q_client, cfg.qdrant.collection_name, cfg.qdrant.vector_size, cfg.qdrant.distance)
+    try:
+        probe_collection_write(q_client, cfg.qdrant.collection_name, cfg.qdrant.vector_size)
+    except Exception as exc:
+        typer.echo(f"Qdrant write check failed: {exc}")
+        raise typer.Exit(1)
 
     paths = discover_files(cfg.roots, cfg.include_extensions, cfg.exclude_globs)
     path_set = {str(p) for p in paths}
@@ -249,14 +286,22 @@ def search(
     q_client = make_qdrant_client(cfg.qdrant.url)
     embedder = Embedder(cfg.embeddings.model_name, cfg.embeddings.device)
 
-    bm25 = bm25_search(
-        os_client,
-        cfg.opensearch.index_name,
-        query,
-        cfg.search.bm25_top_k,
-        source_type,
-        path_contains,
-    )
+    try:
+        bm25 = bm25_search(
+            os_client,
+            cfg.opensearch.index_name,
+            query,
+            cfg.search.bm25_top_k,
+            source_type,
+            path_contains,
+        )
+    except NotFoundError as exc:
+        if getattr(exc, "error", "") == "index_not_found_exception":
+            typer.echo(
+                f"OpenSearch index '{cfg.opensearch.index_name}' not found. Run `searchctl ingest --config {config}` first."
+            )
+            raise typer.Exit(1)
+        raise
     qvec = embedder.encode_query(query).tolist()
     vec = vector_search(
         q_client,
@@ -302,7 +347,10 @@ def search(
         if len(result_rows) >= limit:
             break
 
-    _to_json(result_rows, json_out)
+    if json_out:
+        _to_json(result_rows, True)
+    else:
+        typer.echo(_format_search_results(query, result_rows))
 
 
 @app.command()
