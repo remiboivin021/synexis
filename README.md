@@ -76,6 +76,7 @@ searchctl search "positionnement freelance" --config config.yaml --summarize
 ```
 
 `--summarize` prints a human-readable synthesis followed by a `Sources` section.
+By default summarize mode uses BM25-only retrieval to avoid heavy embedding runtime crashes; add `--summary-use-hybrid` to include vector retrieval.
 
 ## Troubleshooting
 

@@ -6,13 +6,13 @@ import re
 import time
 import unicodedata
 from pathlib import Path
+from typing import Any
 import typer
 from opensearchpy.exceptions import NotFoundError
 
 from searchctl.chunking import split_into_chunks
 from searchctl.config import AppConfig, load_config
 from searchctl.document_map import classify_document, infer_scope, map_boost, write_document_map
-from searchctl.embeddings import Embedder
 from searchctl.extractors import extract_markdown, extract_pdf, extract_text
 from searchctl.fs_scanner import discover_files
 from searchctl.fusion import rrf_fuse
@@ -166,7 +166,7 @@ def _write_doc_error(db: MetadataDB, path: Path, doc_id: str, source_type: str, 
     )
 
 
-def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Embedder, os_client, q_client) -> dict:
+def _process_one(path: Path, cfg: AppConfig, db: MetadataDB, embedder: Any, os_client, q_client) -> dict:
     doc_id = make_doc_id(path)
     mtime = int(path.stat().st_mtime)
 
@@ -284,6 +284,8 @@ def ingest(
     force: bool = typer.Option(False, "--force"),
     debug: bool = typer.Option(False, "--debug"),
 ) -> None:
+    from searchctl.embeddings import Embedder
+
     configure_logging(debug=debug)
     cfg = load_config(config)
     if force:
@@ -368,11 +370,16 @@ def search(
     ),
     summarize: bool = typer.Option(False, "--summarize", help="Generate a human-readable synthesis with OpenRouter."),
     summary_top_k: int = typer.Option(8, "--summary-top-k", help="How many ranked results are provided to LLM summary."),
+    summary_use_hybrid: bool = typer.Option(
+        False,
+        "--summary-use-hybrid",
+        help="Use vector retrieval in summarize mode (may load heavy embedding runtime).",
+    ),
 ) -> None:
     cfg = load_config(config)
     os_client = make_opensearch_client(cfg.opensearch.url)
-    q_client = make_qdrant_client(cfg.qdrant.url)
-    embedder = Embedder(cfg.embeddings.model_name, cfg.embeddings.device)
+    use_vector = (not summarize) or summary_use_hybrid
+    q_client = make_qdrant_client(cfg.qdrant.url) if use_vector else None
 
     try:
         bm25 = bm25_search(
@@ -390,15 +397,21 @@ def search(
             )
             raise typer.Exit(1)
         raise
-    qvec = embedder.encode_query(query).tolist()
-    vec = vector_search(
-        q_client,
-        cfg.qdrant.collection_name,
-        qvec,
-        cfg.search.vector_top_k,
-        source_type,
-        path_contains,
-    )
+    if use_vector:
+        from searchctl.embeddings import Embedder
+
+        embedder = Embedder(cfg.embeddings.model_name, cfg.embeddings.device)
+        qvec = embedder.encode_query(query).tolist()
+        vec = vector_search(
+            q_client,
+            cfg.qdrant.collection_name,
+            qvec,
+            cfg.search.vector_top_k,
+            source_type,
+            path_contains,
+        )
+    else:
+        vec = []
 
     fused = rrf_fuse(bm25, vec, cfg.search.rrf_k)
     boosted_rows = [

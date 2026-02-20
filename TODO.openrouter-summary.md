@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] (none)
+- [ ] [T-004] prevent summarize segfault by avoiding eager embedding load
 
 ---
 
@@ -39,3 +39,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-001] add openrouter config, provider, and prompt templates | commit: 94d5d68
 - [x] [T-002] integrate summary mode in search command with sources output | commit: af13bb9
 - [x] [T-003] add tests/docs and verify behavior | commit: 1bdd5bb
+- [x] [T-004] prevent summarize segfault by avoiding eager embedding load | commit: pending

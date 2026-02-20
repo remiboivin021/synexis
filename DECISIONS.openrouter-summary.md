@@ -36,3 +36,13 @@ Task: T-003
 Commit: 1bdd5bb
 Impact: low, module
 Date: 2026-02-20
+
+### [D-004] Default summarize mode to BM25-only to avoid embedding segfaults
+
+Context: User observed process-level segmentation fault when running summarize with embedding runtime load.
+Decision: Avoid eager embedding import and disable vector retrieval by default in summarize mode.
+Rationale: Keeps summarize path stable; hybrid mode remains available via `--summary-use-hybrid`.
+Task: T-004
+Commit: pending
+Impact: medium, module
+Date: 2026-02-20
