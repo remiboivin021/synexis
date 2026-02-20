@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from searchctl.document_map import classify_document, infer_scope, write_document_map
+from searchctl.document_map import classify_document, infer_scope, map_boost, write_document_map
 
 
 def test_infer_scope_from_path() -> None:
@@ -19,3 +19,8 @@ def test_write_document_map(tmp_path: Path) -> None:
     out = tmp_path / 'document_map.json'
     write_document_map([{'scope': 'projects', 'path': '/a', 'title': 'A', 'active': True, 'tags': []}], out)
     assert out.exists()
+
+
+def test_map_boost_for_active_project_query() -> None:
+    payload = {"doc_scope": "projects", "doc_active": True, "path": "/x/03_Projects/a.md"}
+    assert map_boost(payload, "projets en cours") >= 0.06

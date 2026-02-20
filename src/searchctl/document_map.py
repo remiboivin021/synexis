@@ -58,6 +58,29 @@ def classify_document(path: str, title: str, text: str) -> dict[str, Any]:
     }
 
 
+def query_intent(query: str) -> dict[str, bool]:
+    q = normalize_text(query)
+    return {
+        "projects": ("projet" in q) or ("project" in q),
+        "active": ("en cours" in q) or ("actif" in q) or ("active" in q) or ("current" in q),
+    }
+
+
+def map_boost(payload: dict[str, Any], query: str) -> float:
+    intent = query_intent(query)
+    scope = str(payload.get("doc_scope") or infer_scope(str(payload.get("path") or "")))
+    active = bool(payload.get("doc_active"))
+
+    boost = 0.0
+    if intent["projects"] and scope == "projects":
+        boost += 0.03
+    if intent["active"] and active:
+        boost += 0.03
+    if intent["active"] and scope == "dashboard":
+        boost += 0.01
+    return boost
+
+
 def write_document_map(entries: list[dict[str, Any]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     entries_sorted = sorted(entries, key=lambda e: (e.get("scope", ""), e.get("path", "")))

@@ -12,7 +12,7 @@ from opensearchpy.exceptions import NotFoundError
 
 from searchctl.chunking import split_into_chunks
 from searchctl.config import AppConfig, load_config
-from searchctl.document_map import classify_document, write_document_map
+from searchctl.document_map import classify_document, infer_scope, map_boost, write_document_map
 from searchctl.embeddings import Embedder
 from searchctl.extractors import extract_markdown, extract_pdf, extract_text
 from searchctl.fs_scanner import discover_files
@@ -341,6 +341,12 @@ def search(
     source_type: str | None = typer.Option(None, "--source-type"),
     path_contains: str | None = typer.Option(None, "--path-contains"),
     strict: bool = typer.Option(False, "--strict", help="Require lexical term match for each result."),
+    scope: str | None = typer.Option(
+        None,
+        "--scope",
+        help="Restrict to scope: projects|playbooks|decisions|dashboard|knowledge|other",
+    ),
+    active_only: bool = typer.Option(False, "--active-only", help="Keep only documents inferred as active."),
     must_contain: list[str] = typer.Option(
         None,
         "--must-contain",
@@ -379,17 +385,34 @@ def search(
     )
 
     fused = rrf_fuse(bm25, vec, cfg.search.rrf_k)
+    boosted_rows = [
+        (row, row.score + map_boost(row.payload, query))
+        for row in fused
+    ]
+    boosted_rows.sort(
+        key=lambda item: (
+            -item[1],
+            item[0].bm25_rank if item[0].bm25_rank is not None else 10**9,
+            item[0].vector_rank if item[0].vector_rank is not None else 10**9,
+            item[0].chunk_id,
+        )
+    )
     limit = top or cfg.search.return_top_n
     strict_terms = _query_terms(query) if strict else []
     explicit_terms = [_normalize_text(t) for t in (must_contain or []) if t.strip()]
     required_terms = strict_terms + explicit_terms
     result_rows = []
     seen_docs: set[str] = set()
-    for rank, row in enumerate(fused, start=1):
+    for rank, (row, effective_score) in enumerate(boosted_rows, start=1):
         payload = row.payload
         if source_type and payload.get("source_type") != source_type:
             continue
         if path_contains and path_contains not in payload.get("path", ""):
+            continue
+        payload_scope = str(payload.get("doc_scope") or infer_scope(str(payload.get("path") or "")))
+        if scope and payload_scope != scope:
+            continue
+        if active_only and not bool(payload.get("doc_active")):
             continue
         if not _matches_terms(payload, required_terms):
             continue
@@ -401,7 +424,7 @@ def search(
         result_rows.append(
             {
                 "rank": rank,
-                "score": row.score,
+                "score": effective_score,
                 "doc_path": payload.get("path"),
                 "doc_title": payload.get("title"),
                 "snippet": build_snippet(payload.get("text", ""), payload.get("highlight")),
@@ -414,6 +437,8 @@ def search(
                     "bm25_rank": row.bm25_rank,
                     "vector_rank": row.vector_rank,
                     "fusion_method": "rrf",
+                    "scope": payload_scope,
+                    "active": bool(payload.get("doc_active")),
                 },
             }
         )

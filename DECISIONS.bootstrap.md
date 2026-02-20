@@ -43,6 +43,16 @@ Context: Query intent like "projets en cours" needs document-level signals beyon
 Decision: Classify each document at ingest time and persist `document_map.json` in the data directory.
 Rationale: Enables deterministic scope/activity-aware ranking and filtering without introducing a new DB schema.
 Task: T-006
+Commit: 1a60662
+Impact: medium, module
+Date: 2026-02-20
+
+### [D-005] Apply map-aware ranking and query-time filters
+
+Context: Generic hybrid scores still surfaced out-of-context notes for project intent queries.
+Decision: Add map-based score boosts and query filters (`--scope`, `--active-only`) in `search`.
+Rationale: Keeps hybrid retrieval while adding deterministic intent alignment.
+Task: T-007
 Commit: pending
 Impact: medium, module
 Date: 2026-02-20
