@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-003] implement tests and fixture validation flows
+- [ ] [T-004] finalize docs/config/compose and run verification
 
 ---
 
@@ -37,4 +37,5 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 # Done
 - [x] [T-000] initialize feature worktree | commit: c342c4a
 - [x] [T-001] bootstrap governance artifacts and project scaffolding | commit: c342c4a
-- [x] [T-002] implement core ingestion and search modules with CLI commands | commit: pending
+- [x] [T-002] implement core ingestion and search modules with CLI commands | commit: 0558c51
+- [x] [T-003] implement tests and fixture validation flows | commit: pending
