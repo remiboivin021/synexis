@@ -1,0 +1,51 @@
+roots:
+  - "C:/path/to/obsidian_vault"
+  - "C:/path/to/docs"
+
+include_extensions: [".md", ".pdf", ".txt"]
+
+exclude_globs:
+  - "**/.git/**"
+  - "**/node_modules/**"
+  - "**/.obsidian/**"
+  - "**/.trash/**"
+  - "**/.DS_Store"
+  - "**/Thumbs.db"
+
+chunking:
+  target_chars: 2200
+  overlap_chars: 250
+  min_chunk_chars: 400
+
+embeddings:
+  model_name: "intfloat/e5-small-v2"
+  batch_size: 32
+  device: "auto"
+
+opensearch:
+  url: "http://localhost:9200"
+  index_name: "personal_chunks_v1"
+
+qdrant:
+  url: "http://localhost:6333"
+  collection_name: "personal_chunks_v1"
+  vector_size: 384
+  distance: "Cosine"
+
+indexing:
+  reindex_policy: "incremental"
+  max_workers: 8
+
+search:
+  bm25_top_k: 50
+  vector_top_k: 50
+  fusion: "rrf"
+  rrf_k: 60
+  rerank: "off"
+  rerank_top_k: 20
+  return_top_n: 10
+  collapse_by_doc_default: false
+
+metadata:
+  sqlite_path: "./data/metadata.db"
+  extracted_text_cache_dir: "./data/extracted_text"
