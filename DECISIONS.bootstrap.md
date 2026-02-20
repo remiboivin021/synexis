@@ -23,6 +23,6 @@ Context: `pip install -e . --no-build-isolation` fails if build backend deps are
 Decision: Add troubleshooting and explicit install sequence for `setuptools` and `wheel`.
 Rationale: Reduces setup failure for local-first workflows that disable build isolation.
 Task: T-004
-Commit: pending
+Commit: 914729a
 Impact: low, localized
 Date: 2026-02-20
