@@ -53,6 +53,6 @@ Context: `cli.py` imports `probe_collection_write` but the branch-local qdrant c
 Decision: Add `probe_collection_write` back in `qdrant/collections.py`.
 Rationale: Restores import consistency and startup behavior for ingest/readiness checks.
 Task: T-005
-Commit: pending
+Commit: 2cd080e
 Impact: low, localized
 Date: 2026-02-20

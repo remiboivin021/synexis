@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-005] fix qdrant probe import mismatch in openrouter branch
+- [ ] (none)
 
 ---
 
@@ -40,4 +40,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-002] integrate summary mode in search command with sources output | commit: af13bb9
 - [x] [T-003] add tests/docs and verify behavior | commit: 1bdd5bb
 - [x] [T-004] prevent summarize segfault by avoiding eager embedding load | commit: e867da8
-- [x] [T-005] fix qdrant probe import mismatch in openrouter branch | commit: pending
+- [x] [T-005] fix qdrant probe import mismatch in openrouter branch | commit: 2cd080e
