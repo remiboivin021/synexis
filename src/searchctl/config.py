@@ -52,6 +52,13 @@ class MetadataConfig(BaseModel):
     extracted_text_cache_dir: str = "./data/extracted_text"
 
 
+class LLMConfig(BaseModel):
+    provider: Literal["openrouter"] = "openrouter"
+    base_url: str = "https://openrouter.ai/api/v1"
+    model: str = "openrouter/auto"
+    api_key: str = ""
+
+
 class AppConfig(BaseModel):
     roots: list[str] = Field(default_factory=list)
     include_extensions: list[str] = Field(default_factory=lambda: [".md", ".pdf", ".txt"])
@@ -63,6 +70,7 @@ class AppConfig(BaseModel):
     indexing: IndexingConfig = Field(default_factory=IndexingConfig)
     search: SearchConfig = Field(default_factory=SearchConfig)
     metadata: MetadataConfig = Field(default_factory=MetadataConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
 
     @model_validator(mode="after")
     def validate_constraints(self) -> "AppConfig":

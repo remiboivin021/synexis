@@ -49,3 +49,9 @@ search:
 metadata:
   sqlite_path: "./data/metadata.db"
   extracted_text_cache_dir: "./data/extracted_text"
+
+llm:
+  provider: "openrouter"
+  base_url: "https://openrouter.ai/api/v1"
+  model: "openrouter/auto"
+  api_key: "" # or set OPENROUTER_API_KEY
