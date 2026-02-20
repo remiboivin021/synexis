@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
@@ -27,5 +29,19 @@ def delete_doc_vectors(client: QdrantClient, collection_name: str, doc_id: str) 
     client.delete(
         collection_name=collection_name,
         points_selector=models.FilterSelector(filter=models.Filter(must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))])),
+        wait=True,
+    )
+
+
+def probe_collection_write(client: QdrantClient, collection_name: str, vector_size: int) -> None:
+    probe_id = str(uuid4())
+    client.upsert(
+        collection_name=collection_name,
+        points=[models.PointStruct(id=probe_id, vector=[0.0] * vector_size, payload={"_probe": True})],
+        wait=True,
+    )
+    client.delete(
+        collection_name=collection_name,
+        points_selector=models.PointIdsList(points=[probe_id]),
         wait=True,
     )

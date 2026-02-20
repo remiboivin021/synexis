@@ -46,3 +46,13 @@ Task: T-004
 Commit: e867da8
 Impact: medium, module
 Date: 2026-02-20
+
+### [D-005] Reintroduce qdrant probe helper expected by CLI
+
+Context: `cli.py` imports `probe_collection_write` but the branch-local qdrant collections module did not define it.
+Decision: Add `probe_collection_write` back in `qdrant/collections.py`.
+Rationale: Restores import consistency and startup behavior for ingest/readiness checks.
+Task: T-005
+Commit: pending
+Impact: low, localized
+Date: 2026-02-20
