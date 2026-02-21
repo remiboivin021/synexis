@@ -156,3 +156,13 @@ Task: T-015
 Commit: 1119fdd
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-016] Afficher les erreurs backend en toast rouge en haut a droite
+
+Context: Les erreurs backend n'etaient visibles qu'en texte inline et manquaient de visibilite immediate.
+Decision: Ajouter un toast rouge dans le coin haut droit, avec animation d'entree de droite vers gauche et auto-disparition.
+Rationale: Ameliorer le feedback utilisateur sans changer les contrats API backend.
+Task: T-016
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

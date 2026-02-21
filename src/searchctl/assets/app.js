@@ -16,6 +16,53 @@ function byId(id) {
   return document.getElementById(id);
 }
 
+function formatErrorMessage(err) {
+  if (err instanceof Error && err.message) return err.message;
+  return String(err || 'Erreur inconnue');
+}
+
+function showErrorToast(message) {
+  const container = byId('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = [
+    'pointer-events-auto',
+    'max-w-sm',
+    'bg-red-600/95',
+    'text-red-50',
+    'border',
+    'border-red-300/40',
+    'rounded-xl',
+    'shadow-2xl',
+    'px-4',
+    'py-3',
+    'text-sm',
+    'font-medium',
+    'translate-x-12',
+    'opacity-0',
+    'transition-all',
+    'duration-300',
+    'ease-out',
+  ].join(' ');
+  toast.innerHTML = `<div class="flex items-start gap-2">
+    <i class="fas fa-triangle-exclamation mt-0.5"></i>
+    <div>Erreur backend: ${message}</div>
+  </div>`;
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.remove('translate-x-12', 'opacity-0');
+    toast.classList.add('translate-x-0', 'opacity-100');
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('translate-x-0', 'opacity-100');
+    toast.classList.add('-translate-x-3', 'opacity-0');
+    setTimeout(() => toast.remove(), 320);
+  }, 4200);
+}
+
 function setText(id, text) {
   const el = byId(id);
   if (el) el.textContent = text || '';
@@ -55,7 +102,9 @@ async function loadDocuments() {
 
     setText('doc-count', `${docs.length} documents indexés`);
   } catch (err) {
-    setText('doc-count', `Erreur: ${String(err)}`);
+    const msg = formatErrorMessage(err);
+    setText('doc-count', `Erreur: ${msg}`);
+    showErrorToast(msg);
   }
 }
 
@@ -66,7 +115,9 @@ async function openDocument(docId, fallbackTitle) {
     const queryInput = byId('search-input');
     if (queryInput) queryInput.value = title;
   } catch (err) {
-    setText('doc-count', `Erreur document: ${String(err)}`);
+    const msg = formatErrorMessage(err);
+    setText('doc-count', `Erreur document: ${msg}`);
+    showErrorToast(msg);
   }
 }
 
@@ -199,10 +250,12 @@ async function runSearch() {
 
     renderSources(out.results || [], out.sources || []);
   } catch (err) {
+    const msg = formatErrorMessage(err);
     if (loader) loader.classList.add('hidden');
     if (synthContainer) synthContainer.classList.remove('hidden');
-    if (synthText) synthText.textContent = `Erreur: ${String(err)}`;
+    if (synthText) synthText.textContent = `Erreur: ${msg}`;
     if (sourcesContainer) sourcesContainer.classList.add('hidden');
+    showErrorToast(msg);
   }
 }
 
