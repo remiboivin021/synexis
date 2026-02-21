@@ -173,6 +173,6 @@ Context: Les erreurs backend pouvaient etre longues et techniques, peu lisibles 
 Decision: Normaliser les erreurs en une ligne courte avec mapping des cas courants (reseau, 4xx, 5xx, services).
 Rationale: Garder uniquement l'idee utile pour l'utilisateur tout en restant actionnable.
 Task: T-017
-Commit: pending
+Commit: d094bf1
 Impact: low, localized
 Date: 2026-02-21

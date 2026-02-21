@@ -52,4 +52,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-014] animate synthesis markdown progressive reveal for a more professional reading experience | commit: 0d99fa5
 - [x] [T-015] switch synthesis animation to word-by-word markdown rendering | commit: 1119fdd
 - [x] [T-016] show backend errors as top-right red toast sliding from right to left | commit: d285c1c
-- [x] [T-017] simplify backend error messages to concise one-line user-friendly labels | commit: pending
+- [x] [T-017] simplify backend error messages to concise one-line user-friendly labels | commit: d094bf1
