@@ -116,3 +116,13 @@ Task: T-011
 Commit: f1505f3
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-012] Brancher le template redesign sur les vraies APIs et supprimer les mocks
+
+Context: Le nouveau `index.html` contenait un script inline avec des données simulées, déconnecté des endpoints backend.
+Decision: Retirer le script mock dans `index.html` et adapter `app.js` aux IDs du nouveau design pour consommer `/api/documents` et `/api/search`.
+Rationale: Préserver le design fourni tout en reconnectant l'UI à la donnée réelle du moteur.
+Task: T-012
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
