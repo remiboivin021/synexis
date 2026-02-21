@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import searchctl.web as webmod
 
 from searchctl.config import AppConfig
 from searchctl.web import (
@@ -119,5 +118,5 @@ def test_fastapi_static_routes_exist(tmp_path: Path) -> None:
     )
     app = create_app(str(cfg))
     paths = {route.path for route in app.routes if hasattr(route, "path")}
-    assert "/static/app.css" in paths
-    assert "/static/app.js" in paths
+    assert "/" in paths
+    assert "/static" in paths

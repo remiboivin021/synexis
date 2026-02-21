@@ -106,3 +106,13 @@ Task: T-010
 Commit: 330f71b
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-011] Servir les assets avec StaticFiles plutôt que routes manuelles
+
+Context: Les routes manuelles `/static/app.css` et `/static/app.js` alourdissaient `web.py`.
+Decision: Monter le dossier assets avec `app.mount('/static', StaticFiles(...))` et servir `/` via `FileResponse(index.html)`.
+Rationale: Implémentation FastAPI plus idiomatique, moins de code serveur et maintenance plus simple.
+Task: T-011
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

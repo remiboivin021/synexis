@@ -4,13 +4,13 @@ import json
 import re
 import unicodedata
 from html import escape
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from opensearchpy.exceptions import NotFoundError
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from searchctl.config import AppConfig, load_config
 from searchctl.document_map import infer_scope, map_boost
@@ -195,14 +195,11 @@ def render_markdown_safe(text: str) -> str:
     return "\n".join(html_parts)
 
 
-def _load_asset_text(filename: str) -> str:
-    asset_path = Path(__file__).with_name("assets") / filename
-    if asset_path.exists():
-        return asset_path.read_text(encoding="utf-8")
-    try:
-        return resources.files("searchctl").joinpath("assets").joinpath(filename).read_text(encoding="utf-8")
-    except Exception as exc:
-        raise FileNotFoundError(f"web asset not found: {filename}") from exc
+def _assets_dir() -> Path:
+    assets = Path(__file__).with_name("assets")
+    if assets.exists():
+        return assets
+    raise FileNotFoundError("web assets directory not found")
 
 
 def _search_rows(
@@ -317,30 +314,20 @@ def _search_rows(
     }
 
 
-def _build_index_html() -> str:
-    return _load_asset_text("index.html")
-
-
 def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
     cfg = load_config(config_path)
+    assets_dir = _assets_dir()
     app = FastAPI(title="searchctl-web", docs_url=None, redoc_url=None)
     app.state.cfg = cfg
     app.state.use_hybrid_default = use_hybrid_default
+    app.mount("/static", StaticFiles(directory=str(assets_dir)), name="static")
 
     def _json_error(message: str, status_code: int) -> Any:
         return JSONResponse({"error": message}, status_code=status_code)
 
-    @app.get("/", response_class=HTMLResponse)
+    @app.get("/", response_class=FileResponse)
     async def web_index() -> Any:
-        return _build_index_html()
-
-    @app.get("/static/app.css")
-    async def web_css() -> Any:
-        return Response(_load_asset_text("app.css"), media_type="text/css; charset=utf-8")
-
-    @app.get("/static/app.js")
-    async def web_js() -> Any:
-        return Response(_load_asset_text("app.js"), media_type="application/javascript; charset=utf-8")
+        return FileResponse(assets_dir / "index.html")
 
     @app.get("/api/documents")
     async def list_documents() -> Any:

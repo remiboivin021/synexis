@@ -46,3 +46,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-008] refactor web backend from stdlib server to FastAPI while keeping existing API behavior | commit: 803b9ef
 - [x] [T-009] fix fastapi request typing causing 422 on /api/search and add regression test | commit: 03bfdc8
 - [x] [T-010] split web ui into separate html css js assets and serve them via fastapi | commit: 330f71b
+- [x] [T-011] clean fastapi static serving with mounted staticfiles and file response index | commit: pending
