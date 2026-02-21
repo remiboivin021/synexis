@@ -193,6 +193,6 @@ Context: Les erreurs etaient affichees a la fois en toast et dans des zones inli
 Decision: Supprimer l'ecriture des messages d'erreur inline et conserver uniquement le toast rouge.
 Rationale: Feedback plus propre et conforme a l'exigence UX.
 Task: T-019
-Commit: pending
+Commit: 2372e13
 Impact: low, localized
 Date: 2026-02-21
