@@ -176,3 +176,13 @@ Task: T-017
 Commit: d094bf1
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-018] Gerer les statuts mal formes de type "402}}"
+
+Context: Certains retours backend arrivaient dans un format partiel/casse (ex: `402}}`) et s'affichaient tels quels.
+Decision: Nettoyer les caracteres parasites, extraire le code HTTP par regex et mapper 402 vers `Credit API insuffisant`.
+Rationale: Eviter les erreurs bruitees et conserver un message utile en une ligne.
+Task: T-018
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

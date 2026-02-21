@@ -18,18 +18,32 @@ function byId(id) {
 
 function formatErrorMessage(err) {
   const raw = err instanceof Error && err.message ? err.message : String(err || '');
-  const oneLine = raw.replace(/\s+/g, ' ').trim();
+  const oneLine = raw.replace(/[{}[\]"]/g, ' ').replace(/\s+/g, ' ').trim();
   const lower = oneLine.toLowerCase();
+  const statusMatch = oneLine.match(/\b([1-5]\d{2})\b/);
+  const statusCode = statusMatch ? statusMatch[1] : '';
 
   if (!oneLine) return 'Erreur serveur';
   if (lower.includes('failed to fetch') || lower.includes('networkerror')) return 'Serveur inaccessible';
   if (lower.includes('timeout')) return 'Délai dépassé';
-  if (lower.includes('http 400') || lower.includes('unprocessable') || lower.includes('422')) return 'Requête invalide';
-  if (lower.includes('http 401') || lower.includes('http 403')) return 'Accès refusé';
-  if (lower.includes('http 404')) return 'Ressource introuvable';
-  if (lower.includes('http 409')) return 'Conflit de requête';
-  if (lower.includes('http 429')) return 'Trop de requêtes';
-  if (lower.includes('http 500') || lower.includes('http 502') || lower.includes('http 503') || lower.includes('http 504')) {
+  if (lower.includes('http 400') || lower.includes('unprocessable') || lower.includes('422') || statusCode === '400' || statusCode === '422') {
+    return 'Requête invalide';
+  }
+  if (lower.includes('http 401') || lower.includes('http 403') || statusCode === '401' || statusCode === '403') return 'Accès refusé';
+  if (lower.includes('http 402') || statusCode === '402') return 'Crédit API insuffisant';
+  if (lower.includes('http 404') || statusCode === '404') return 'Ressource introuvable';
+  if (lower.includes('http 409') || statusCode === '409') return 'Conflit de requête';
+  if (lower.includes('http 429') || statusCode === '429') return 'Trop de requêtes';
+  if (
+    lower.includes('http 500') ||
+    lower.includes('http 502') ||
+    lower.includes('http 503') ||
+    lower.includes('http 504') ||
+    statusCode === '500' ||
+    statusCode === '502' ||
+    statusCode === '503' ||
+    statusCode === '504'
+  ) {
     return 'Erreur interne serveur';
   }
   if (lower.includes('qdrant')) return 'Service vectoriel indisponible';
