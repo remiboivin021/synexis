@@ -203,6 +203,6 @@ Context: Le template conservait une valeur statique (`12 documents indexes`) qui
 Decision: Initialiser le compteur en mode chargement, puis le remplir dynamiquement via `/api/documents` avec gestion du pluriel et etat vide.
 Rationale: Eliminer les faux contenus et garder une UI strictement alimentee par les donnees serveur.
 Task: T-020
-Commit: pending
+Commit: 20b9de4
 Impact: low, localized
 Date: 2026-02-21
