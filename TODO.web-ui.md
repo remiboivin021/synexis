@@ -48,3 +48,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-010] split web ui into separate html css js assets and serve them via fastapi | commit: 330f71b
 - [x] [T-011] clean fastapi static serving with mounted staticfiles and file response index | commit: f1505f3
 - [x] [T-012] wire redesigned index template to real api data and remove mock frontend script | commit: a7f659b
+- [x] [T-013] render synthesis markdown in redesigned template using summary_html | commit: pending

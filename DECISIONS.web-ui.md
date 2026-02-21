@@ -126,3 +126,13 @@ Task: T-012
 Commit: a7f659b
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-013] Afficher la synthèse en markdown rendu dans le template redesign
+
+Context: La vue synthèse du nouveau template affichait encore du texte brut avec effet typewriter.
+Decision: Utiliser prioritairement `summary_html` (rendu markdown serveur) dans `#synthesis-text`, avec fallback typewriter sur `summary`.
+Rationale: Cohérence avec la capacité markdown déjà exposée par l'API et meilleure lisibilité.
+Task: T-013
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

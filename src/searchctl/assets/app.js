@@ -136,7 +136,12 @@ async function runSearch() {
 
     const summaryRaw = out.summary || 'Aucune synthèse disponible.';
     if (synthText) {
-      await typeWriter(synthText, summaryRaw);
+      if (out.summary_html) {
+        synthText.classList.remove('typing-cursor');
+        synthText.innerHTML = out.summary_html;
+      } else {
+        await typeWriter(synthText, summaryRaw);
+      }
     }
 
     renderSources(out.results || [], out.sources || []);
