@@ -17,8 +17,26 @@ function byId(id) {
 }
 
 function formatErrorMessage(err) {
-  if (err instanceof Error && err.message) return err.message;
-  return String(err || 'Erreur inconnue');
+  const raw = err instanceof Error && err.message ? err.message : String(err || '');
+  const oneLine = raw.replace(/\s+/g, ' ').trim();
+  const lower = oneLine.toLowerCase();
+
+  if (!oneLine) return 'Erreur serveur';
+  if (lower.includes('failed to fetch') || lower.includes('networkerror')) return 'Serveur inaccessible';
+  if (lower.includes('timeout')) return 'Délai dépassé';
+  if (lower.includes('http 400') || lower.includes('unprocessable') || lower.includes('422')) return 'Requête invalide';
+  if (lower.includes('http 401') || lower.includes('http 403')) return 'Accès refusé';
+  if (lower.includes('http 404')) return 'Ressource introuvable';
+  if (lower.includes('http 409')) return 'Conflit de requête';
+  if (lower.includes('http 429')) return 'Trop de requêtes';
+  if (lower.includes('http 500') || lower.includes('http 502') || lower.includes('http 503') || lower.includes('http 504')) {
+    return 'Erreur interne serveur';
+  }
+  if (lower.includes('qdrant')) return 'Service vectoriel indisponible';
+  if (lower.includes('opensearch') || lower.includes('tantivy')) return 'Index de recherche indisponible';
+
+  const concise = oneLine.split(':').pop().trim();
+  return concise || 'Erreur serveur';
 }
 
 function showErrorToast(message) {

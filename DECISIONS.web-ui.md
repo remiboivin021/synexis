@@ -166,3 +166,13 @@ Task: T-016
 Commit: d285c1c
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-017] Simplifier les messages d'erreur backend en une ligne
+
+Context: Les erreurs backend pouvaient etre longues et techniques, peu lisibles dans un toast.
+Decision: Normaliser les erreurs en une ligne courte avec mapping des cas courants (reseau, 4xx, 5xx, services).
+Rationale: Garder uniquement l'idee utile pour l'utilisateur tout en restant actionnable.
+Task: T-017
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
