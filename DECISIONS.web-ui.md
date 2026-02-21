@@ -63,7 +63,7 @@ Context: L'affichage brut du Markdown dans la web UI était peu lisible.
 Decision: Ajouter un rendu Markdown minimal côté serveur (titres/listes/code/inline) avec échappement HTML systématique.
 Rationale: Améliorer la lisibilité sans ajouter de dépendance runtime ni ouvrir une surface XSS par injection HTML brute.
 Task: T-006
-Commit: pending
+Commit: 1735a13
 Impact: medium, localized
 Date: 2026-02-21
 
@@ -73,6 +73,6 @@ Context: La synthèse OpenRouter pouvait contenir du Markdown mais était affich
 Decision: Ajouter `summary_html` dans la réponse API et l'afficher en `innerHTML` via le renderer Markdown sécurisé existant.
 Rationale: Cohérence visuelle avec la lecture document, sans élargir la surface de risque XSS.
 Task: T-007
-Commit: pending
+Commit: 4323c2d
 Impact: low, localized
 Date: 2026-02-21
