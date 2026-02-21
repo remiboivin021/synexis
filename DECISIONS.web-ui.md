@@ -96,3 +96,13 @@ Task: T-009
 Commit: 03bfdc8
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-010] Extraire UI web dans des assets dédiés
+
+Context: L'UI était inline dans `web.py`, ce qui compliquait les itérations front et la lisibilité.
+Decision: Déplacer le frontend en fichiers séparés (`src/searchctl/assets/index.html`, `src/searchctl/assets/app.css`, `src/searchctl/assets/app.js`) servis par FastAPI.
+Rationale: Séparation claire backend/frontend avec contrats API inchangés.
+Task: T-010
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

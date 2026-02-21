@@ -107,3 +107,17 @@ def test_fastapi_search_route_uses_request_injection(tmp_path: Path) -> None:
     search_route = next(route for route in app.routes if getattr(route, "path", None) == "/api/search")
     assert search_route.dependant.request_param_name == "request"
     assert len(search_route.dependant.query_params) == 0
+
+
+def test_fastapi_static_routes_exist(tmp_path: Path) -> None:
+    cfg = tmp_path / "config.yaml"
+    cfg.write_text(
+        "roots: []\n"
+        "qdrant:\n"
+        "  vector_size: 384\n",
+        encoding="utf-8",
+    )
+    app = create_app(str(cfg))
+    paths = {route.path for route in app.routes if hasattr(route, "path")}
+    assert "/static/app.css" in paths
+    assert "/static/app.js" in paths

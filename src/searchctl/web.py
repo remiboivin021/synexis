@@ -4,12 +4,13 @@ import json
 import re
 import unicodedata
 from html import escape
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from opensearchpy.exceptions import NotFoundError
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from searchctl.config import AppConfig, load_config
 from searchctl.document_map import infer_scope, map_boost
@@ -194,6 +195,16 @@ def render_markdown_safe(text: str) -> str:
     return "\n".join(html_parts)
 
 
+def _load_asset_text(filename: str) -> str:
+    asset_path = Path(__file__).with_name("assets") / filename
+    if asset_path.exists():
+        return asset_path.read_text(encoding="utf-8")
+    try:
+        return resources.files("searchctl").joinpath("assets").joinpath(filename).read_text(encoding="utf-8")
+    except Exception as exc:
+        raise FileNotFoundError(f"web asset not found: {filename}") from exc
+
+
 def _search_rows(
     cfg: AppConfig,
     query: str,
@@ -307,149 +318,7 @@ def _search_rows(
 
 
 def _build_index_html() -> str:
-    return """<!doctype html>
-<html lang=\"fr\">
-<head>
-  <meta charset=\"utf-8\" />
-  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
-  <title>Synexis Web</title>
-  <style>
-    :root {
-      --bg: #f6f1e8;
-      --panel: #fff9f0;
-      --ink: #1f2328;
-      --muted: #5b6470;
-      --accent: #0f766e;
-      --border: #e5dccf;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Georgia, \"Times New Roman\", serif; color: var(--ink); background: radial-gradient(circle at top right, #fff5e6, var(--bg)); }
-    header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: #fffdf9; }
-    h1 { margin: 0; font-size: 1.3rem; }
-    main { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
-    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 300px; }
-    .row { display: flex; gap: 8px; align-items: center; }
-    input, button, select, textarea { font: inherit; border-radius: 8px; border: 1px solid var(--border); padding: 8px; }
-    textarea { width: 100%; min-height: 120px; }
-    button { background: var(--accent); color: white; border: 0; cursor: pointer; }
-    ul { list-style: none; padding: 0; margin: 8px 0 0; }
-    li { padding: 8px; border-bottom: 1px solid var(--border); }
-    li:hover { background: #f8efe0; cursor: pointer; }
-    pre { white-space: pre-wrap; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 420px; overflow: auto; }
-    .doc-view { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 420px; overflow: auto; }
-    .doc-view h1, .doc-view h2, .doc-view h3 { margin-top: 0.9em; margin-bottom: 0.4em; }
-    .doc-view p, .doc-view li { line-height: 1.45; }
-    .doc-view code { background: #f1e7d6; padding: 1px 4px; border-radius: 4px; }
-    .muted { color: var(--muted); font-size: 0.9rem; }
-    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Synexis Web</h1>
-    <div class=\"muted\">Recherche hybride, synthèse et consultation des documents indexés.</div>
-  </header>
-  <main>
-    <section class=\"panel\">
-      <div class=\"row\">
-        <input id=\"query\" placeholder=\"Requête\" style=\"flex:1\" />
-        <label><input id=\"summarize\" type=\"checkbox\" /> synthèse</label>
-        <label><input id=\"useHybrid\" type=\"checkbox\" /> hybride</label>
-        <button id=\"searchBtn\">Rechercher</button>
-      </div>
-      <div id=\"summary\" class=\"doc-view\" style=\"margin-top:8px\"></div>
-      <ul id=\"results\"></ul>
-    </section>
-    <section class=\"panel\">
-      <div class=\"row\" style=\"justify-content:space-between\">
-        <strong>Documents indexés</strong>
-        <button id=\"refreshBtn\">Rafraîchir</button>
-      </div>
-      <ul id=\"docs\"></ul>
-      <h3>Contenu</h3>
-      <div id=\"docContent\" class=\"doc-view\">Sélectionnez un document.</div>
-    </section>
-  </main>
-  <script>
-    async function api(path, payload) {
-      const opts = payload ? { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) } : {};
-      const res = await fetch(path, opts);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.detail || ('HTTP ' + res.status));
-      return data;
-    }
-
-    function setText(id, text) { document.getElementById(id).textContent = text || ''; }
-
-    async function runSearch() {
-      const query = document.getElementById('query').value.trim();
-      if (!query) return;
-      const summarize = document.getElementById('summarize').checked;
-      const use_hybrid = document.getElementById('useHybrid').checked;
-      try {
-        const out = await api('/api/search', {query, summarize, use_hybrid});
-        const summaryTarget = document.getElementById('summary');
-        if (summarize && out.summary_html) {
-          summaryTarget.innerHTML = out.summary_html;
-        } else {
-          summaryTarget.textContent = summarize ? (out.summary || '') : '';
-        }
-        const root = document.getElementById('results');
-        root.innerHTML = '';
-        for (const row of out.results || []) {
-          const li = document.createElement('li');
-          li.innerHTML = '<strong>#' + row.rank + ' ' + (row.doc_title || '(untitled)') + '</strong><br>' +
-            '<span class="muted">' + (row.doc_path || '') + '</span><br>' +
-            (row.snippet || '') + '<br>' +
-            '<span class="muted">chunk=' + (row.citation?.chunk_id || '') + '</span>';
-          root.appendChild(li);
-        }
-      } catch (err) {
-        setText('summary', String(err));
-      }
-    }
-
-    async function loadDocs() {
-      try {
-        const out = await api('/api/documents');
-        const root = document.getElementById('docs');
-        root.innerHTML = '';
-        for (const doc of out.documents || []) {
-          const li = document.createElement('li');
-          li.textContent = (doc.title || '(untitled)') + ' [' + (doc.source_type || '?') + ']';
-          li.title = doc.path || '';
-          li.onclick = () => openDoc(doc.doc_id);
-          root.appendChild(li);
-        }
-      } catch (err) {
-        setText('docContent', String(err));
-      }
-    }
-
-    async function openDoc(docId) {
-      try {
-        const out = await api('/api/documents/' + encodeURIComponent(docId));
-        const target = document.getElementById('docContent');
-        if (out.source_type === 'markdown' && out.rendered_html) {
-          target.innerHTML = out.rendered_html;
-        } else {
-          target.textContent = out.content || '';
-        }
-      } catch (err) {
-        setText('docContent', String(err));
-      }
-    }
-
-    document.getElementById('searchBtn').onclick = runSearch;
-    document.getElementById('refreshBtn').onclick = loadDocs;
-    document.getElementById('query').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') runSearch();
-    });
-    loadDocs();
-  </script>
-</body>
-</html>
-"""
+    return _load_asset_text("index.html")
 
 
 def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
@@ -464,6 +333,14 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
     @app.get("/", response_class=HTMLResponse)
     async def web_index() -> Any:
         return _build_index_html()
+
+    @app.get("/static/app.css")
+    async def web_css() -> Any:
+        return Response(_load_asset_text("app.css"), media_type="text/css; charset=utf-8")
+
+    @app.get("/static/app.js")
+    async def web_js() -> Any:
+        return Response(_load_asset_text("app.js"), media_type="application/javascript; charset=utf-8")
 
     @app.get("/api/documents")
     async def list_documents() -> Any:

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Synexis Web</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <header>
+    <h1>Synexis Web</h1>
+    <div class="muted">Recherche hybride, synthèse et consultation des documents indexés.</div>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="row">
+        <input id="query" placeholder="Requête" style="flex:1" />
+        <label><input id="summarize" type="checkbox" /> synthèse</label>
+        <label><input id="useHybrid" type="checkbox" /> hybride</label>
+        <button id="searchBtn">Rechercher</button>
+      </div>
+      <div id="summary" class="doc-view" style="margin-top:8px"></div>
+      <ul id="results"></ul>
+    </section>
+    <section class="panel">
+      <div class="row" style="justify-content:space-between">
+        <strong>Documents indexés</strong>
+        <button id="refreshBtn">Rafraîchir</button>
+      </div>
+      <ul id="docs"></ul>
+      <h3>Contenu</h3>
+      <div id="docContent" class="doc-view">Sélectionnez un document.</div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

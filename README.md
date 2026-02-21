@@ -46,6 +46,7 @@ searchctl web --config config.yaml --host 127.0.0.1 --port 8080
 ```
 Then open `http://127.0.0.1:8080`.
 Web serving is powered by FastAPI + Uvicorn.
+Frontend files are served from `src/searchctl/assets/` (`index.html`, `app.css`, `app.js`).
 
 ## Config Setup
 

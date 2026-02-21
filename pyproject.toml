@@ -38,6 +38,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "searchctl.metadata" = ["schema.sql"]
+"searchctl" = ["assets/*.html", "assets/*.css", "assets/*.js"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

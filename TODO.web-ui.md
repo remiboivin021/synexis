@@ -45,3 +45,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-007] render markdown-formatted synthesis in left web panel with safe html | commit: 4323c2d
 - [x] [T-008] refactor web backend from stdlib server to FastAPI while keeping existing API behavior | commit: 803b9ef
 - [x] [T-009] fix fastapi request typing causing 422 on /api/search and add regression test | commit: 03bfdc8
+- [x] [T-010] split web ui into separate html css js assets and serve them via fastapi | commit: pending
