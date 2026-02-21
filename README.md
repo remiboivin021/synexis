@@ -40,6 +40,12 @@ searchctl search "your query" --config config.yaml --json
 searchctl search "your query" --config config.yaml --summarize
 ```
 
+6. Web UI (local interface):
+```bash
+searchctl web --config config.yaml --host 127.0.0.1 --port 8080
+```
+Then open `http://127.0.0.1:8080`.
+
 ## Config Setup
 
 - Default config path: `./config.yaml`
@@ -54,7 +60,15 @@ searchctl ingest [--config <path>] [--force]
 searchctl search "<query>" [--json] [--top N] [--collapse-by-doc] [--source-type <t>] [--path-contains <s>] [--summarize] [--summary-top-k N]
 searchctl status [--json]
 searchctl inspect --doc "<path>" | --chunk "<chunk_id>" [--json]
+searchctl web [--config <path>] [--host 127.0.0.1] [--port 8080] [--allow-remote]
 ```
+
+`searchctl web` starts a browser-oriented UI with:
+- query search and ranked citations
+- optional synthesis via OpenRouter
+- indexed document listing and content reading
+
+Security default: non-local bind hosts are rejected unless `--allow-remote` is set.
 
 ## OpenRouter Summary
 

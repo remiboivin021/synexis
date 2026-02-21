@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-003] update README and add ADR for local web HTTP surface
+- [ ] (none)
 
 ---
 
@@ -37,4 +37,5 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 # Done
 - [x] [T-000] initialize feature worktree and planning artifacts | commit: 83ed5ce
 - [x] [T-001] implement local web server module and CLI command for search/synthesis/document browsing | commit: 83ed5ce
-- [x] [T-002] add targeted tests for web safety and helper behavior | commit: pending
+- [x] [T-002] add targeted tests for web safety and helper behavior | commit: 6473be9
+- [x] [T-003] update README and add ADR for local web HTTP surface | commit: pending

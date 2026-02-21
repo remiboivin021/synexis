@@ -26,3 +26,13 @@ Task: T-002
 Commit: pending
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-003] Formaliser la surface web en ADR dédiée
+
+Context: L'interface web introduit un nouvel accès HTTP, donc une extension explicite de la surface d'interaction.
+Decision: Ajouter une ADR dédiée décrivant portée, contraintes de bind local, alternatives et rollback.
+Rationale: Maintenir la traçabilité architecturale et clarifier la posture sécurité avant merge.
+Task: T-003
+Commit: pending
+Impact: medium, module
+Date: 2026-02-21
