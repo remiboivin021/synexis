@@ -23,7 +23,7 @@ Context: Les endpoints de recherche dépendent d'OpenSearch/Qdrant, mais les ris
 Decision: Ajouter des tests unitaires ciblés sur `resolve_bind_host`, `_is_under_roots` et `_read_doc_content`.
 Rationale: Couvrir rapidement les invariants de sécurité locale sans rendre la suite dépendante des backends externes.
 Task: T-002
-Commit: pending
+Commit: 6473be9
 Impact: low, localized
 Date: 2026-02-21
 
@@ -33,7 +33,7 @@ Context: L'interface web introduit un nouvel accès HTTP, donc une extension exp
 Decision: Ajouter une ADR dédiée décrivant portée, contraintes de bind local, alternatives et rollback.
 Rationale: Maintenir la traçabilité architecturale et clarifier la posture sécurité avant merge.
 Task: T-003
-Commit: pending
+Commit: d8e697f
 Impact: medium, module
 Date: 2026-02-21
 
@@ -43,7 +43,7 @@ Context: L'exécution depuis `site-packages` échouait car `schema.sql` n'était
 Decision: Déclarer `searchctl.metadata/schema.sql` dans `tool.setuptools.package-data` et ajouter un chargement robuste via `importlib.resources`.
 Rationale: Le runtime fonctionne à la fois en source tree et en installation wheel/editable.
 Task: T-004
-Commit: pending
+Commit: 3dd8039
 Impact: medium, localized
 Date: 2026-02-21
 
@@ -53,6 +53,6 @@ Context: Des segfaults surviennent lors des requêtes web en chemin hybride (emb
 Decision: Basculer la recherche web en BM25-only par défaut, avec activation explicite de l'hybride (checkbox UI / flag CLI).
 Rationale: Réduire le risque runtime par défaut tout en conservant la capacité hybride à la demande.
 Task: T-005
-Commit: pending
+Commit: 0524fd1
 Impact: medium, localized
 Date: 2026-02-21
