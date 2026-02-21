@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from searchctl.config import AppConfig
-from searchctl.web import _is_under_roots, _read_doc_content, resolve_bind_host, should_use_vector
+from searchctl.web import _is_under_roots, _read_doc_content, render_markdown_safe, resolve_bind_host, should_use_vector
 
 
 def test_resolve_bind_host_accepts_local_defaults() -> None:
@@ -64,3 +64,18 @@ def test_should_use_vector_defaults_to_bm25_for_web_search() -> None:
     assert should_use_vector(use_hybrid=False, summarize=False, summary_use_hybrid=False) is False
     assert should_use_vector(use_hybrid=False, summarize=True, summary_use_hybrid=False) is False
     assert should_use_vector(use_hybrid=True, summarize=False, summary_use_hybrid=False) is True
+
+
+def test_render_markdown_safe_formats_common_markdown() -> None:
+    md = "# Titre\n\n- item **gras**\n\nParagraphe `code`."
+    html = render_markdown_safe(md)
+    assert "<h1>Titre</h1>" in html
+    assert "<ul>" in html
+    assert "<strong>gras</strong>" in html
+    assert "<code>code</code>" in html
+
+
+def test_render_markdown_safe_escapes_raw_html() -> None:
+    html = render_markdown_safe("Bonjour <script>alert(1)</script>")
+    assert "<script>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html

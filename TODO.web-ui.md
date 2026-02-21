@@ -41,3 +41,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-003] update README and add ADR for local web HTTP surface | commit: d8e697f
 - [x] [T-004] fix packaged schema loading for web/runtime installs | commit: 3dd8039
 - [x] [T-005] make web search bm25-only by default and gate hybrid explicitly | commit: 0524fd1
+- [x] [T-006] add markdown rendering in web document viewer with safe html output | commit: pending

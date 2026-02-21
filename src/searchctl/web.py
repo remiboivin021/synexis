@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
-from http import HTTPStatus
+from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -122,6 +122,75 @@ def _read_doc_content(doc: dict[str, Any], cfg: AppConfig) -> str:
         return cache_path.read_text(encoding="utf-8")
 
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def _inline_markdown(text: str) -> str:
+    out = escape(text, quote=False)
+    out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
+    out = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", out)
+    out = re.sub(r"`([^`]+)`", r"<code>\1</code>", out)
+    return out
+
+
+def render_markdown_safe(text: str) -> str:
+    lines = text.splitlines()
+    html_parts: list[str] = []
+    in_code = False
+    in_list = False
+    code_lines: list[str] = []
+
+    for raw in lines:
+        line = raw.rstrip("\n")
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            if in_code:
+                html_parts.append("<pre><code>" + escape("\n".join(code_lines), quote=False) + "</code></pre>")
+                code_lines = []
+                in_code = False
+            else:
+                if in_list:
+                    html_parts.append("</ul>")
+                    in_list = False
+                in_code = True
+            continue
+
+        if in_code:
+            code_lines.append(line)
+            continue
+
+        if not stripped:
+            if in_list:
+                html_parts.append("</ul>")
+                in_list = False
+            continue
+
+        if stripped.startswith("- "):
+            if not in_list:
+                html_parts.append("<ul>")
+                in_list = True
+            html_parts.append("<li>" + _inline_markdown(stripped[2:]) + "</li>")
+            continue
+
+        if in_list:
+            html_parts.append("</ul>")
+            in_list = False
+
+        if stripped.startswith("### "):
+            html_parts.append("<h3>" + _inline_markdown(stripped[4:]) + "</h3>")
+        elif stripped.startswith("## "):
+            html_parts.append("<h2>" + _inline_markdown(stripped[3:]) + "</h2>")
+        elif stripped.startswith("# "):
+            html_parts.append("<h1>" + _inline_markdown(stripped[2:]) + "</h1>")
+        else:
+            html_parts.append("<p>" + _inline_markdown(stripped) + "</p>")
+
+    if in_list:
+        html_parts.append("</ul>")
+    if in_code:
+        html_parts.append("<pre><code>" + escape("\n".join(code_lines), quote=False) + "</code></pre>")
+
+    return "\n".join(html_parts)
 
 
 def _search_rows(
@@ -314,6 +383,7 @@ class SearchWebHandler(BaseHTTPRequestHandler):
                     "title": doc["title"],
                     "source_type": doc["source_type"],
                     "content": content,
+                    "rendered_html": render_markdown_safe(content) if doc["source_type"] == "markdown" else None,
                 }
             )
             return
@@ -380,6 +450,10 @@ def _build_index_html() -> str:
     li { padding: 8px; border-bottom: 1px solid var(--border); }
     li:hover { background: #f8efe0; cursor: pointer; }
     pre { white-space: pre-wrap; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 420px; overflow: auto; }
+    .doc-view { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 420px; overflow: auto; }
+    .doc-view h1, .doc-view h2, .doc-view h3 { margin-top: 0.9em; margin-bottom: 0.4em; }
+    .doc-view p, .doc-view li { line-height: 1.45; }
+    .doc-view code { background: #f1e7d6; padding: 1px 4px; border-radius: 4px; }
     .muted { color: var(--muted); font-size: 0.9rem; }
     @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
   </style>
@@ -407,7 +481,7 @@ def _build_index_html() -> str:
       </div>
       <ul id=\"docs\"></ul>
       <h3>Contenu</h3>
-      <pre id=\"docContent\">Sélectionnez un document.</pre>
+      <div id=\"docContent\" class=\"doc-view\">Sélectionnez un document.</div>
     </section>
   </main>
   <script>
@@ -464,7 +538,12 @@ def _build_index_html() -> str:
     async function openDoc(docId) {
       try {
         const out = await api('/api/documents/' + encodeURIComponent(docId));
-        setText('docContent', out.content || '');
+        const target = document.getElementById('docContent');
+        if (out.source_type === 'markdown' && out.rendered_html) {
+          target.innerHTML = out.rendered_html;
+        } else {
+          target.textContent = out.content || '';
+        }
       } catch (err) {
         setText('docContent', String(err));
       }

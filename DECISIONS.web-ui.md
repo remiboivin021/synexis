@@ -56,3 +56,13 @@ Task: T-005
 Commit: 0524fd1
 Impact: medium, localized
 Date: 2026-02-21
+
+### [D-006] Rendu Markdown serveur avec échappement HTML strict
+
+Context: L'affichage brut du Markdown dans la web UI était peu lisible.
+Decision: Ajouter un rendu Markdown minimal côté serveur (titres/listes/code/inline) avec échappement HTML systématique.
+Rationale: Améliorer la lisibilité sans ajouter de dépendance runtime ni ouvrir une surface XSS par injection HTML brute.
+Task: T-006
+Commit: pending
+Impact: medium, localized
+Date: 2026-02-21
