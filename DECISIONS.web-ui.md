@@ -223,6 +223,6 @@ Context: Le bon template inclut une navigation par onglets qui n'etait pas prese
 Decision: Reprendre la structure onglets, implementer `switchView`, et hydrater les cartes dashboard via `/api/documents` (total, type majoritaire, recents).
 Rationale: Retrouver le design attendu tout en eliminant les valeurs factices.
 Task: T-022
-Commit: pending
+Commit: 47ca754
 Impact: low, localized
 Date: 2026-02-21

@@ -57,4 +57,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-019] display backend errors only in top-right toast and nowhere inline | commit: 2372e13
 - [x] [T-020] remove remaining default template values and drive document panel from backend data | commit: 20b9de4
 - [x] [T-021] integrate side panel template and bind it to document api data | commit: 7327e64
-- [x] [T-022] restore dashboard/search tabs template and hydrate dashboard with backend data | commit: pending
+- [x] [T-022] restore dashboard/search tabs template and hydrate dashboard with backend data | commit: 47ca754
