@@ -206,3 +206,13 @@ Task: T-020
 Commit: 20b9de4
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-021] Reintegrer le panneau lateral et l'alimenter avec les donnees document
+
+Context: Le template fourni incluait un panneau lateral de lecture qui n'etait pas branche dans l'UI courante.
+Decision: Ajouter `side-panel` + overlay et remplir type/titre/contenu via `/api/documents/{doc_id}` au clic document.
+Rationale: Restaurer l'experience du template avec des donnees reelles backend.
+Task: T-021
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

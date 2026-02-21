@@ -16,6 +16,15 @@ function byId(id) {
   return document.getElementById(id);
 }
 
+function escapeHtml(text) {
+  return String(text || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function formatErrorMessage(err) {
   const raw = err instanceof Error && err.message ? err.message : String(err || '');
   const oneLine = raw.replace(/[{}[\]"]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -111,6 +120,22 @@ function sourceTypeIcon(sourceType) {
   return 'fa-file-alt text-blue-400';
 }
 
+function openPanel() {
+  const panel = byId('side-panel');
+  const overlay = byId('panel-overlay');
+  if (!panel || !overlay) return;
+  panel.classList.remove('translate-x-full');
+  overlay.classList.remove('hidden');
+}
+
+function closePanel() {
+  const panel = byId('side-panel');
+  const overlay = byId('panel-overlay');
+  if (!panel || !overlay) return;
+  panel.classList.add('translate-x-full');
+  overlay.classList.add('hidden');
+}
+
 async function loadDocuments() {
   const list = byId('document-list');
   if (!list) return;
@@ -152,8 +177,35 @@ async function openDocument(docId, fallbackTitle) {
   try {
     const out = await api('/api/documents/' + encodeURIComponent(docId));
     const title = out.title || fallbackTitle || 'Document';
+    const panelType = byId('panel-type');
+    const panelTitle = byId('panel-title');
+    const panelContent = byId('panel-content');
+    const panelOpenOriginal = byId('panel-open-original');
+
     const queryInput = byId('search-input');
     if (queryInput) queryInput.value = title;
+
+    if (panelType) panelType.textContent = sourceTypeLabel(out.source_type || 'text');
+    if (panelTitle) panelTitle.textContent = title;
+    if (panelContent) {
+      if (out.rendered_html) {
+        panelContent.innerHTML = out.rendered_html;
+      } else {
+        panelContent.innerHTML = `<pre class="whitespace-pre-wrap break-words text-slate-300">${escapeHtml(out.content || '')}</pre>`;
+      }
+    }
+    if (panelOpenOriginal) {
+      const docPath = out.path || '';
+      panelOpenOriginal.onclick = () => {
+        if (!docPath) return;
+        window.open(`file://${encodeURI(docPath)}`, '_blank', 'noopener');
+      };
+      panelOpenOriginal.disabled = !docPath;
+      panelOpenOriginal.classList.toggle('opacity-50', !docPath);
+      panelOpenOriginal.classList.toggle('cursor-not-allowed', !docPath);
+    }
+
+    openPanel();
   } catch (err) {
     const msg = formatErrorMessage(err);
     showErrorToast(msg);
@@ -307,6 +359,12 @@ function init() {
       if (e.key === 'Enter') runSearch();
     });
   }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePanel();
+  });
+
+  window.closePanel = closePanel;
 
   loadDocuments();
 }

@@ -56,3 +56,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-018] normalize malformed backend status strings like 402 and map to concise label | commit: 8b15717
 - [x] [T-019] display backend errors only in top-right toast and nowhere inline | commit: 2372e13
 - [x] [T-020] remove remaining default template values and drive document panel from backend data | commit: 20b9de4
+- [x] [T-021] integrate side panel template and bind it to document api data | commit: pending
