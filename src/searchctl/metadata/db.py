@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -16,8 +17,7 @@ class MetadataDB:
         self.conn.row_factory = sqlite3.Row
 
     def init_schema(self) -> None:
-        schema_path = Path(__file__).with_name("schema.sql")
-        self.conn.executescript(schema_path.read_text(encoding="utf-8"))
+        self.conn.executescript(_load_schema_sql())
         row = self.conn.execute("SELECT schema_version FROM meta LIMIT 1").fetchone()
         if row is None:
             self.conn.execute("INSERT INTO meta(schema_version) VALUES (?)", (SCHEMA_VERSION,))
@@ -114,3 +114,13 @@ class MetadataDB:
 
     def fetch_doc(self, path: str) -> sqlite3.Row | None:
         return self.conn.execute("SELECT * FROM documents WHERE path = ?", (path,)).fetchone()
+
+
+def _load_schema_sql() -> str:
+    schema_path = Path(__file__).with_name("schema.sql")
+    if schema_path.exists():
+        return schema_path.read_text(encoding="utf-8")
+    try:
+        return resources.files("searchctl.metadata").joinpath("schema.sql").read_text(encoding="utf-8")
+    except Exception as exc:
+        raise FileNotFoundError("searchctl metadata schema.sql not found in package or source tree") from exc

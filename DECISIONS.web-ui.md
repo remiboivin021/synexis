@@ -36,3 +36,13 @@ Task: T-003
 Commit: pending
 Impact: medium, module
 Date: 2026-02-21
+
+### [D-004] Charger schema SQL depuis package_data en mode installé
+
+Context: L'exécution depuis `site-packages` échouait car `schema.sql` n'était pas embarqué, cassant `MetadataDB.init_schema()`.
+Decision: Déclarer `searchctl.metadata/schema.sql` dans `tool.setuptools.package-data` et ajouter un chargement robuste via `importlib.resources`.
+Rationale: Le runtime fonctionne à la fois en source tree et en installation wheel/editable.
+Task: T-004
+Commit: pending
+Impact: medium, localized
+Date: 2026-02-21
