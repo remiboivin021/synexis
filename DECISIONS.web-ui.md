@@ -86,3 +86,13 @@ Task: T-008
 Commit: 803b9ef
 Impact: medium, module
 Date: 2026-02-21
+
+### [D-009] Importer Request au niveau module pour éviter 422 FastAPI
+
+Context: `POST /api/search` renvoyait 422 car l'annotation `Request` (import local dans `create_app`) n'était pas résolue avec annotations différées.
+Decision: Importer `FastAPI`, `Request`, `HTMLResponse`, `JSONResponse` au niveau module et ajouter un test de non-régression endpoint.
+Rationale: Rétablir l'injection correcte de `Request` par FastAPI et stabiliser le contrat API.
+Task: T-009
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

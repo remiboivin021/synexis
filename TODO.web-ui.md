@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] (none)
+- [ ] [T-009] fix fastapi request typing causing 422 on /api/search and add regression test
 
 ---
 

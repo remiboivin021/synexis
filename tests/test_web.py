@@ -3,9 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import searchctl.web as webmod
 
 from searchctl.config import AppConfig
-from searchctl.web import _is_under_roots, _read_doc_content, render_markdown_safe, resolve_bind_host, should_use_vector
+from searchctl.web import (
+    _is_under_roots,
+    _read_doc_content,
+    create_app,
+    render_markdown_safe,
+    resolve_bind_host,
+    should_use_vector,
+)
 
 
 def test_resolve_bind_host_accepts_local_defaults() -> None:
@@ -79,3 +87,23 @@ def test_render_markdown_safe_escapes_raw_html() -> None:
     html = render_markdown_safe("Bonjour <script>alert(1)</script>")
     assert "<script>" not in html
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+
+
+def test_fastapi_search_route_uses_request_injection(tmp_path: Path) -> None:
+    cfg = tmp_path / "config.yaml"
+    cfg.write_text(
+        "roots: []\n"
+        "opensearch:\n"
+        "  url: http://localhost:9200\n"
+        "  index_name: personal_chunks_v1\n"
+        "qdrant:\n"
+        "  url: http://localhost:6333\n"
+        "  collection_name: personal_chunks_v1\n"
+        "  vector_size: 384\n"
+        "  distance: Cosine\n",
+        encoding="utf-8",
+    )
+    app = create_app(str(cfg))
+    search_route = next(route for route in app.routes if getattr(route, "path", None) == "/api/search")
+    assert search_route.dependant.request_param_name == "request"
+    assert len(search_route.dependant.query_params) == 0

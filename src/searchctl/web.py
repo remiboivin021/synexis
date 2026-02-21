@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from opensearchpy.exceptions import NotFoundError
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from searchctl.config import AppConfig, load_config
 from searchctl.document_map import infer_scope, map_boost
@@ -451,12 +453,6 @@ def _build_index_html() -> str:
 
 
 def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
-    try:
-        from fastapi import FastAPI, Request
-        from fastapi.responses import HTMLResponse, JSONResponse
-    except ImportError as exc:
-        raise RuntimeError("FastAPI is not installed. Run `pip install -e .` to install web dependencies.") from exc
-
     cfg = load_config(config_path)
     app = FastAPI(title="searchctl-web", docs_url=None, redoc_url=None)
     app.state.cfg = cfg
