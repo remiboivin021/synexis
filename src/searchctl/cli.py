@@ -538,5 +538,21 @@ def inspect(
     _to_json(out or {}, json_out)
 
 
+@app.command()
+def web(
+    config: str = typer.Option("config.yaml", "--config"),
+    host: str = typer.Option("127.0.0.1", "--host"),
+    port: int = typer.Option(8080, "--port"),
+    allow_remote: bool = typer.Option(
+        False,
+        "--allow-remote",
+        help="Allow non-local bind host (disabled by default).",
+    ),
+) -> None:
+    from searchctl.web import serve_web
+
+    serve_web(config, host, port, allow_remote)
+
+
 if __name__ == "__main__":
     app()
