@@ -39,4 +39,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-001] implement local web server module and CLI command for search/synthesis/document browsing | commit: 83ed5ce
 - [x] [T-002] add targeted tests for web safety and helper behavior | commit: 6473be9
 - [x] [T-003] update README and add ADR for local web HTTP surface | commit: d8e697f
-- [x] [T-004] fix packaged schema loading for web/runtime installs | commit: pending
+- [x] [T-004] fix packaged schema loading for web/runtime installs | commit: 3dd8039
