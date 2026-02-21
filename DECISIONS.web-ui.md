@@ -183,6 +183,6 @@ Context: Certains retours backend arrivaient dans un format partiel/casse (ex: `
 Decision: Nettoyer les caracteres parasites, extraire le code HTTP par regex et mapper 402 vers `Credit API insuffisant`.
 Rationale: Eviter les erreurs bruitees et conserver un message utile en une ligne.
 Task: T-018
-Commit: pending
+Commit: 8b15717
 Impact: low, localized
 Date: 2026-02-21
