@@ -103,6 +103,6 @@ Context: L'UI était inline dans `web.py`, ce qui compliquait les itérations fr
 Decision: Déplacer le frontend en fichiers séparés (`src/searchctl/assets/index.html`, `src/searchctl/assets/app.css`, `src/searchctl/assets/app.js`) servis par FastAPI.
 Rationale: Séparation claire backend/frontend avec contrats API inchangés.
 Task: T-010
-Commit: pending
+Commit: 330f71b
 Impact: low, localized
 Date: 2026-02-21
