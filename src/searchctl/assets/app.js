@@ -120,6 +120,15 @@ async function loadDocuments() {
     const docs = out.documents || [];
     list.innerHTML = '';
 
+    if (!docs.length) {
+      const empty = document.createElement('div');
+      empty.className = 'p-3 rounded-lg border border-slate-700 text-sm text-slate-500';
+      empty.textContent = 'Aucun document indexé';
+      list.appendChild(empty);
+      setText('doc-count', '0 document indexé');
+      return;
+    }
+
     for (const doc of docs) {
       const row = document.createElement('div');
       row.className = 'p-3 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors flex items-center gap-3 group';
@@ -132,7 +141,7 @@ async function loadDocuments() {
       list.appendChild(row);
     }
 
-    setText('doc-count', `${docs.length} documents indexés`);
+    setText('doc-count', `${docs.length} document${docs.length > 1 ? 's' : ''} indexé${docs.length > 1 ? 's' : ''}`);
   } catch (err) {
     const msg = formatErrorMessage(err);
     showErrorToast(msg);

@@ -196,3 +196,13 @@ Task: T-019
 Commit: 2372e13
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-020] Supprimer les valeurs par defaut restantes du template et hydrater avec l'API
+
+Context: Le template conservait une valeur statique (`12 documents indexes`) qui ne reflétait pas l'etat backend.
+Decision: Initialiser le compteur en mode chargement, puis le remplir dynamiquement via `/api/documents` avec gestion du pluriel et etat vide.
+Rationale: Eliminer les faux contenus et garder une UI strictement alimentee par les donnees serveur.
+Task: T-020
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
