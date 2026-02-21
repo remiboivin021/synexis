@@ -287,14 +287,22 @@ def _search_rows(
 
     sources = collect_sources(result_rows)
     summary = None
+    summary_html = None
     if summarize:
         summary = (
             f"Aucun resultat pour la requete: {query}"
             if not result_rows
             else _summarize_with_openrouter(query, result_rows, cfg, summary_top_k)
         )
+        summary_html = render_markdown_safe(summary)
 
-    return {"query": query, "results": result_rows, "sources": sources, "summary": summary}
+    return {
+        "query": query,
+        "results": result_rows,
+        "sources": sources,
+        "summary": summary,
+        "summary_html": summary_html,
+    }
 
 
 class _WebState:
@@ -502,7 +510,12 @@ def _build_index_html() -> str:
       const use_hybrid = document.getElementById('useHybrid').checked;
       try {
         const out = await api('/api/search', {query, summarize, use_hybrid});
-        setText('summary', summarize ? (out.summary || '') : '');
+        const summaryTarget = document.getElementById('summary');
+        if (summarize && out.summary_html) {
+          summaryTarget.innerHTML = out.summary_html;
+        } else {
+          summaryTarget.textContent = summarize ? (out.summary || '') : '';
+        }
         const root = document.getElementById('results');
         root.innerHTML = '';
         for (const row of out.results || []) {

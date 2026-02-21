@@ -42,3 +42,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-004] fix packaged schema loading for web/runtime installs | commit: 3dd8039
 - [x] [T-005] make web search bm25-only by default and gate hybrid explicitly | commit: 0524fd1
 - [x] [T-006] add markdown rendering in web document viewer with safe html output | commit: 1735a13
+- [x] [T-007] render markdown-formatted synthesis in left web panel with safe html | commit: pending

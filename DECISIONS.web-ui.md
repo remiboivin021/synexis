@@ -66,3 +66,13 @@ Task: T-006
 Commit: pending
 Impact: medium, localized
 Date: 2026-02-21
+
+### [D-007] Rendu Markdown aussi pour la synthèse de gauche
+
+Context: La synthèse OpenRouter pouvait contenir du Markdown mais était affichée en texte brut dans la colonne gauche.
+Decision: Ajouter `summary_html` dans la réponse API et l'afficher en `innerHTML` via le renderer Markdown sécurisé existant.
+Rationale: Cohérence visuelle avec la lecture document, sans élargir la surface de risque XSS.
+Task: T-007
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

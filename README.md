@@ -65,7 +65,7 @@ searchctl web [--config <path>] [--host 127.0.0.1] [--port 8080] [--allow-remote
 
 `searchctl web` starts a browser-oriented UI with:
 - query search and ranked citations
-- optional synthesis via OpenRouter
+- optional synthesis via OpenRouter (rendered Markdown in left panel)
 - indexed document listing and content reading
 - rendered Markdown view (headings/lists/code/inline styles), with safe escaping of raw HTML
 
