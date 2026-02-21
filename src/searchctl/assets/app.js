@@ -120,6 +120,27 @@ function sourceTypeIcon(sourceType) {
   return 'fa-file-alt text-blue-400';
 }
 
+function switchView(viewName) {
+  const views = ['dashboard', 'search'];
+  for (const v of views) {
+    const viewEl = byId(`view-${v}`);
+    const navEl = byId(`nav-${v}`);
+    if (viewEl) viewEl.classList.add('hidden');
+    if (navEl) {
+      navEl.classList.remove('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-500/20', 'shadow-lg');
+      navEl.classList.add('text-slate-400');
+    }
+  }
+
+  const targetView = byId(`view-${viewName}`);
+  const targetNav = byId(`nav-${viewName}`);
+  if (targetView) targetView.classList.remove('hidden');
+  if (targetNav) {
+    targetNav.classList.remove('text-slate-400');
+    targetNav.classList.add('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-500/20', 'shadow-lg');
+  }
+}
+
 function openPanel() {
   const panel = byId('side-panel');
   const overlay = byId('panel-overlay');
@@ -144,6 +165,7 @@ async function loadDocuments() {
     const out = await api('/api/documents');
     const docs = out.documents || [];
     list.innerHTML = '';
+    updateDashboardFromDocuments(docs);
 
     if (!docs.length) {
       const empty = document.createElement('div');
@@ -170,6 +192,40 @@ async function loadDocuments() {
   } catch (err) {
     const msg = formatErrorMessage(err);
     showErrorToast(msg);
+  }
+}
+
+function updateDashboardFromDocuments(docs) {
+  const total = docs.length;
+  setText('dashboard-doc-count', String(total));
+
+  const typeCount = new Map();
+  for (const doc of docs) {
+    const t = sourceTypeLabel(doc.source_type || 'text');
+    typeCount.set(t, (typeCount.get(t) || 0) + 1);
+  }
+  const topType = [...typeCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+  setText('dashboard-top-type', topType);
+
+  const recent = byId('dashboard-recent-docs');
+  if (recent) {
+    recent.innerHTML = '';
+    const items = docs.slice(0, 6);
+    if (!items.length) {
+      recent.innerHTML = '<p class=\"text-slate-500\">Aucun document indexé.</p>';
+    } else {
+      for (const doc of items) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'w-full text-left p-3 rounded-lg bg-slate-900/50 border border-slate-800 hover:border-indigo-500 transition-colors';
+        row.innerHTML = `
+          <div class=\"font-medium text-slate-200 truncate\">${escapeHtml(doc.title || '(untitled)')}</div>
+          <div class=\"text-xs text-slate-500 mt-1 truncate\">${escapeHtml(doc.path || '')}</div>
+        `;
+        row.onclick = () => openDocument(doc.doc_id, doc.title || '(untitled)');
+        recent.appendChild(row);
+      }
+    }
   }
 }
 
@@ -340,6 +396,7 @@ async function runSearch() {
     }
 
     renderSources(out.results || [], out.sources || []);
+    setText('dashboard-last-sources', String((out.sources || []).length));
   } catch (err) {
     const msg = formatErrorMessage(err);
     if (loader) loader.classList.add('hidden');
@@ -365,7 +422,11 @@ function init() {
   });
 
   window.closePanel = closePanel;
+  window.switchView = switchView;
+  window.runSearch = runSearch;
 
+  switchView('search');
+  setText('dashboard-last-sources', '-');
   loadDocuments();
 }
 
