@@ -123,6 +123,6 @@ Context: Le nouveau `index.html` contenait un script inline avec des données si
 Decision: Retirer le script mock dans `index.html` et adapter `app.js` aux IDs du nouveau design pour consommer `/api/documents` et `/api/search`.
 Rationale: Préserver le design fourni tout en reconnectant l'UI à la donnée réelle du moteur.
 Task: T-012
-Commit: pending
+Commit: a7f659b
 Impact: low, localized
 Date: 2026-02-21
