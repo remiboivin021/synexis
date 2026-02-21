@@ -12,7 +12,6 @@ from opensearchpy.exceptions import NotFoundError
 
 from searchctl.config import AppConfig, load_config
 from searchctl.document_map import infer_scope, map_boost
-from searchctl.embeddings import Embedder
 from searchctl.fusion import rrf_fuse
 from searchctl.llm_openrouter import OpenRouterConfig, call_openrouter_summary
 from searchctl.metadata.db import MetadataDB
@@ -151,6 +150,8 @@ def _search_rows(
         raise
 
     if use_vector:
+        from searchctl.embeddings import Embedder
+
         embedder = Embedder(cfg.embeddings.model_name, cfg.embeddings.device)
         qvec = embedder.encode_query(query).tolist()
         vec = vector_search(
