@@ -113,6 +113,6 @@ Context: Les routes manuelles `/static/app.css` et `/static/app.js` alourdissaie
 Decision: Monter le dossier assets avec `app.mount('/static', StaticFiles(...))` et servir `/` via `FileResponse(index.html)`.
 Rationale: Implémentation FastAPI plus idiomatique, moins de code serveur et maintenance plus simple.
 Task: T-011
-Commit: pending
+Commit: f1505f3
 Impact: low, localized
 Date: 2026-02-21
