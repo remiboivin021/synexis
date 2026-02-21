@@ -153,6 +153,6 @@ Context: Le rendu progressif par blocs restait trop abrupt pour l'effet visuel a
 Decision: Afficher `summary_html` mot par mot en reconstruisant le DOM markdown avec des noeuds texte alimentes progressivement.
 Rationale: Obtenir un effet de lecture plus fluide sans perdre la structure HTML du markdown (titres/listes/code).
 Task: T-015
-Commit: pending
+Commit: 1119fdd
 Impact: low, localized
 Date: 2026-02-21
