@@ -12,7 +12,7 @@ Synexis currently exposes interaction only through CLI commands. Users requested
 Adding a web entry point introduces a new network-facing surface and untrusted HTTP input handling.
 
 ## Decision
-Implement a local web UI served by the existing Python runtime using `ThreadingHTTPServer` and `BaseHTTPRequestHandler` in `src/searchctl/web.py`.
+Implement a local web UI served by the existing Python runtime using FastAPI + Uvicorn in `src/searchctl/web.py`.
 
 Constraints adopted:
 - Default bind host is local-only (`127.0.0.1` / `localhost` / `::1`).
@@ -23,12 +23,12 @@ Constraints adopted:
   - `GET /api/documents/<doc_id>`
   - `POST /api/search`
 - Search/ranking logic is reused unchanged from current retrieval behavior.
-- No new third-party web framework dependency is introduced.
+- Web layer dependency is explicit and pinned (`fastapi`, `uvicorn`).
 
 ## Consequences
 Positive:
 - Users can interact from browser without changing indexing/retrieval contracts.
-- Dependency footprint and supply-chain risk stay stable.
+- Endpoint behavior and error contracts are easier to maintain and extend.
 - Exposure defaults are conservative (localhost only).
 
 Negative:
@@ -36,8 +36,8 @@ Negative:
 - `POST /api/search` still allows expensive queries and can consume local resources.
 
 ## Alternatives Considered
-1. Add FastAPI/Flask.
-- Rejected for this iteration to avoid dependency expansion and larger blast radius.
+1. Keep stdlib `http.server`.
+- Rejected after iteration feedback due maintainability and routing ergonomics limits for the growing web surface.
 
 2. Keep CLI-only.
 - Rejected because it does not satisfy the requested browser interaction capability.

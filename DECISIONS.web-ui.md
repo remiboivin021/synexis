@@ -76,3 +76,13 @@ Task: T-007
 Commit: 4323c2d
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-008] Migrer le serveur web vers FastAPI/Uvicorn
+
+Context: La surface web grandit (rendu markdown, synthèse, API JSON) et `http.server` devient moins maintenable.
+Decision: Remplacer le serveur stdlib par une app FastAPI + exécution Uvicorn en conservant les mêmes routes et contrats JSON.
+Rationale: Routage/maintenance plus robustes avec un diff limité et sans changement du comportement métier search/summarize.
+Task: T-008
+Commit: pending
+Impact: medium, module
+Date: 2026-02-21

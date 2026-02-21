@@ -45,6 +45,7 @@ searchctl search "your query" --config config.yaml --summarize
 searchctl web --config config.yaml --host 127.0.0.1 --port 8080
 ```
 Then open `http://127.0.0.1:8080`.
+Web serving is powered by FastAPI + Uvicorn.
 
 ## Config Setup
 

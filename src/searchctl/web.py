@@ -4,7 +4,6 @@ import json
 import re
 import unicodedata
 from html import escape
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
@@ -305,129 +304,6 @@ def _search_rows(
     }
 
 
-class _WebState:
-    def __init__(self, cfg: AppConfig, use_hybrid_default: bool) -> None:
-        self.cfg = cfg
-        self.use_hybrid_default = use_hybrid_default
-
-
-class SearchWebHandler(BaseHTTPRequestHandler):
-    server_version = "searchctl-web/0.1"
-
-    def _state(self) -> _WebState:
-        return self.server.state  # type: ignore[attr-defined]
-
-    def _send_json(self, payload: dict[str, Any], status: int = 200) -> None:
-        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
-
-    def _send_html(self, html: str) -> None:
-        raw = html.encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
-
-    def _read_json_body(self) -> dict[str, Any]:
-        length_header = self.headers.get("Content-Length") or "0"
-        length = int(length_header)
-        if length <= 0:
-            return {}
-        if length > MAX_BODY_BYTES:
-            raise ValueError("request body too large")
-        raw = self.rfile.read(length)
-        return json.loads(raw.decode("utf-8"))
-
-    def do_GET(self) -> None:  # noqa: N802
-        cfg = self._state().cfg
-        if self.path == "/":
-            self._send_html(_build_index_html())
-            return
-
-        if self.path == "/api/documents":
-            db = MetadataDB(cfg.metadata.sqlite_path)
-            db.init_schema()
-            docs = [
-                {
-                    "doc_id": row["doc_id"],
-                    "path": row["path"],
-                    "title": row["title"],
-                    "source_type": row["source_type"],
-                    "status": row["status"],
-                    "updated_at": row["updated_at"],
-                }
-                for row in db.list_documents()
-            ]
-            docs.sort(key=lambda item: int(item["updated_at"] or 0), reverse=True)
-            self._send_json({"documents": docs})
-            return
-
-        if self.path.startswith("/api/documents/"):
-            doc_id = self.path.rsplit("/", 1)[-1]
-            db = MetadataDB(cfg.metadata.sqlite_path)
-            db.init_schema()
-            row = db.get_document(doc_id)
-            if not row:
-                self._send_json({"error": "document not found"}, status=404)
-                return
-            doc = dict(row)
-            try:
-                content = _read_doc_content(doc, cfg)
-            except PermissionError as exc:
-                self._send_json({"error": str(exc)}, status=403)
-                return
-            except FileNotFoundError as exc:
-                self._send_json({"error": str(exc)}, status=404)
-                return
-            self._send_json(
-                {
-                    "doc_id": doc["doc_id"],
-                    "path": doc["path"],
-                    "title": doc["title"],
-                    "source_type": doc["source_type"],
-                    "content": content,
-                    "rendered_html": render_markdown_safe(content) if doc["source_type"] == "markdown" else None,
-                }
-            )
-            return
-
-        self._send_json({"error": "not found"}, status=404)
-
-    def do_POST(self) -> None:  # noqa: N802
-        cfg = self._state().cfg
-        if self.path != "/api/search":
-            self._send_json({"error": "not found"}, status=404)
-            return
-        try:
-            body = self._read_json_body()
-            query = str(body.get("query") or "").strip()
-            if not query:
-                self._send_json({"error": "query is required"}, status=400)
-                return
-            payload = _search_rows(
-                cfg=cfg,
-                query=query,
-                top=int(body.get("top")) if body.get("top") is not None else None,
-                summarize=bool(body.get("summarize", False)),
-                summary_top_k=int(body.get("summary_top_k", 8)),
-                use_hybrid=bool(body.get("use_hybrid", self._state().use_hybrid_default)),
-                summary_use_hybrid=bool(body.get("summary_use_hybrid", False)),
-                strict=bool(body.get("strict", False)),
-            )
-            self._send_json(payload)
-        except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-        except RuntimeError as exc:
-            self._send_json({"error": str(exc)}, status=503)
-        except Exception as exc:  # keep explicit envelope for frontend
-            self._send_json({"error": f"internal error: {exc}"}, status=500)
-
-
 def _build_index_html() -> str:
     return """<!doctype html>
 <html lang=\"fr\">
@@ -445,7 +321,7 @@ def _build_index_html() -> str:
       --border: #e5dccf;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: var(--ink); background: radial-gradient(circle at top right, #fff5e6, var(--bg)); }
+    body { margin: 0; font-family: Georgia, \"Times New Roman\", serif; color: var(--ink); background: radial-gradient(circle at top right, #fff5e6, var(--bg)); }
     header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: #fffdf9; }
     h1 { margin: 0; font-size: 1.3rem; }
     main { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
@@ -479,7 +355,7 @@ def _build_index_html() -> str:
         <label><input id=\"useHybrid\" type=\"checkbox\" /> hybride</label>
         <button id=\"searchBtn\">Rechercher</button>
       </div>
-      <div id=\"summary\" class=\"muted\" style=\"margin-top:8px\"></div>
+      <div id=\"summary\" class=\"doc-view\" style=\"margin-top:8px\"></div>
       <ul id=\"results\"></ul>
     </section>
     <section class=\"panel\">
@@ -497,7 +373,7 @@ def _build_index_html() -> str:
       const opts = payload ? { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) } : {};
       const res = await fetch(path, opts);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      if (!res.ok) throw new Error(data.error || data.detail || ('HTTP ' + res.status));
       return data;
     }
 
@@ -574,6 +450,98 @@ def _build_index_html() -> str:
 """
 
 
+def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
+    try:
+        from fastapi import FastAPI, Request
+        from fastapi.responses import HTMLResponse, JSONResponse
+    except ImportError as exc:
+        raise RuntimeError("FastAPI is not installed. Run `pip install -e .` to install web dependencies.") from exc
+
+    cfg = load_config(config_path)
+    app = FastAPI(title="searchctl-web", docs_url=None, redoc_url=None)
+    app.state.cfg = cfg
+    app.state.use_hybrid_default = use_hybrid_default
+
+    def _json_error(message: str, status_code: int) -> Any:
+        return JSONResponse({"error": message}, status_code=status_code)
+
+    @app.get("/", response_class=HTMLResponse)
+    async def web_index() -> Any:
+        return _build_index_html()
+
+    @app.get("/api/documents")
+    async def list_documents() -> Any:
+        db = MetadataDB(cfg.metadata.sqlite_path)
+        db.init_schema()
+        docs = [
+            {
+                "doc_id": row["doc_id"],
+                "path": row["path"],
+                "title": row["title"],
+                "source_type": row["source_type"],
+                "status": row["status"],
+                "updated_at": row["updated_at"],
+            }
+            for row in db.list_documents()
+        ]
+        docs.sort(key=lambda item: int(item["updated_at"] or 0), reverse=True)
+        return {"documents": docs}
+
+    @app.get("/api/documents/{doc_id}")
+    async def get_document(doc_id: str) -> Any:
+        db = MetadataDB(cfg.metadata.sqlite_path)
+        db.init_schema()
+        row = db.get_document(doc_id)
+        if not row:
+            return _json_error("document not found", 404)
+        doc = dict(row)
+        try:
+            content = _read_doc_content(doc, cfg)
+        except PermissionError as exc:
+            return _json_error(str(exc), 403)
+        except FileNotFoundError as exc:
+            return _json_error(str(exc), 404)
+
+        return {
+            "doc_id": doc["doc_id"],
+            "path": doc["path"],
+            "title": doc["title"],
+            "source_type": doc["source_type"],
+            "content": content,
+            "rendered_html": render_markdown_safe(content) if doc["source_type"] == "markdown" else None,
+        }
+
+    @app.post("/api/search")
+    async def search_api(request: Request) -> Any:
+        try:
+            raw = await request.body()
+            if len(raw) > MAX_BODY_BYTES:
+                return _json_error("request body too large", 400)
+            body = json.loads(raw.decode("utf-8")) if raw else {}
+            query = str(body.get("query") or "").strip()
+            if not query:
+                return _json_error("query is required", 400)
+            payload = _search_rows(
+                cfg=cfg,
+                query=query,
+                top=int(body.get("top")) if body.get("top") is not None else None,
+                summarize=bool(body.get("summarize", False)),
+                summary_top_k=int(body.get("summary_top_k", 8)),
+                use_hybrid=bool(body.get("use_hybrid", app.state.use_hybrid_default)),
+                summary_use_hybrid=bool(body.get("summary_use_hybrid", False)),
+                strict=bool(body.get("strict", False)),
+            )
+            return payload
+        except ValueError as exc:
+            return _json_error(str(exc), 400)
+        except RuntimeError as exc:
+            return _json_error(str(exc), 503)
+        except Exception as exc:
+            return _json_error(f"internal error: {exc}", 500)
+
+    return app
+
+
 def serve_web(
     config_path: str,
     host: str,
@@ -581,14 +549,12 @@ def serve_web(
     allow_remote: bool,
     use_hybrid_default: bool = False,
 ) -> None:
-    cfg = load_config(config_path)
-    bind_host = resolve_bind_host(host, allow_remote)
-    server = ThreadingHTTPServer((bind_host, port), SearchWebHandler)
-    server.state = _WebState(cfg, use_hybrid_default)  # type: ignore[attr-defined]
-    print(f"Synexis web UI available at http://{bind_host}:{port}")
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
+        import uvicorn
+    except ImportError as exc:
+        raise RuntimeError("Uvicorn is not installed. Run `pip install -e .` to install web dependencies.") from exc
+
+    bind_host = resolve_bind_host(host, allow_remote)
+    app = create_app(config_path, use_hybrid_default)
+    print(f"Synexis web UI available at http://{bind_host}:{port}")
+    uvicorn.run(app, host=bind_host, port=port, log_level="info")
