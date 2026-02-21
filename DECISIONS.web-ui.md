@@ -83,6 +83,6 @@ Context: La surface web grandit (rendu markdown, synthèse, API JSON) et `http.s
 Decision: Remplacer le serveur stdlib par une app FastAPI + exécution Uvicorn en conservant les mêmes routes et contrats JSON.
 Rationale: Routage/maintenance plus robustes avec un diff limité et sans changement du comportement métier search/summarize.
 Task: T-008
-Commit: pending
+Commit: 803b9ef
 Impact: medium, module
 Date: 2026-02-21
