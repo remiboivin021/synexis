@@ -80,6 +80,57 @@ async function typeWriter(target, text) {
   target.classList.remove('typing-cursor');
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function animateReveal(node) {
+  if (!(node instanceof HTMLElement)) return;
+  node.classList.add('reveal-item');
+  requestAnimationFrame(() => node.classList.add('reveal-item-visible'));
+}
+
+async function renderSummaryHtmlProgressive(target, html) {
+  target.innerHTML = '';
+  const buffer = document.createElement('div');
+  buffer.innerHTML = html;
+
+  const children = Array.from(buffer.children);
+  if (!children.length) {
+    target.innerHTML = html;
+    return;
+  }
+
+  for (const child of children) {
+    const tag = child.tagName.toLowerCase();
+    if (tag === 'ul' || tag === 'ol') {
+      const list = document.createElement(tag);
+      for (const cls of child.classList) list.classList.add(cls);
+      target.appendChild(list);
+      animateReveal(list);
+      await sleep(100);
+
+      const listItems = Array.from(child.children).filter((el) => el.tagName.toLowerCase() === 'li');
+      if (!listItems.length) {
+        list.innerHTML = child.innerHTML;
+        continue;
+      }
+      for (const item of listItems) {
+        const clone = item.cloneNode(true);
+        list.appendChild(clone);
+        animateReveal(clone);
+        await sleep(80);
+      }
+      continue;
+    }
+
+    const clone = child.cloneNode(true);
+    target.appendChild(clone);
+    animateReveal(clone);
+    await sleep(130);
+  }
+}
+
 function renderSources(results, sources) {
   const container = byId('sources-container');
   const grid = byId('sources-grid');
@@ -138,7 +189,7 @@ async function runSearch() {
     if (synthText) {
       if (out.summary_html) {
         synthText.classList.remove('typing-cursor');
-        synthText.innerHTML = out.summary_html;
+        await renderSummaryHtmlProgressive(synthText, out.summary_html);
       } else {
         await typeWriter(synthText, summaryRaw);
       }

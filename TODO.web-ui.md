@@ -49,3 +49,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-011] clean fastapi static serving with mounted staticfiles and file response index | commit: f1505f3
 - [x] [T-012] wire redesigned index template to real api data and remove mock frontend script | commit: a7f659b
 - [x] [T-013] render synthesis markdown in redesigned template using summary_html | commit: 566e4e1
+- [x] [T-014] animate synthesis markdown progressive reveal for a more professional reading experience | commit: pending

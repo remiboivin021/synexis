@@ -136,3 +136,13 @@ Task: T-013
 Commit: 566e4e1
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-014] Animer l'affichage progressif de la synthèse Markdown
+
+Context: La synthèse markdown s'affichait instantanément, ce qui rendait l'expérience moins fluide visuellement.
+Decision: Révéler progressivement les blocs HTML de `summary_html` (et les items de listes) avec une animation fade/slide courte.
+Rationale: Donner un ressenti plus "live" et professionnel tout en conservant le rendu Markdown déjà sécurisé côté serveur.
+Task: T-014
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
