@@ -213,6 +213,6 @@ Context: Le template fourni incluait un panneau lateral de lecture qui n'etait p
 Decision: Ajouter `side-panel` + overlay et remplir type/titre/contenu via `/api/documents/{doc_id}` au clic document.
 Rationale: Restaurer l'experience du template avec des donnees reelles backend.
 Task: T-021
-Commit: pending
+Commit: 7327e64
 Impact: low, localized
 Date: 2026-02-21
