@@ -135,7 +135,6 @@ async function loadDocuments() {
     setText('doc-count', `${docs.length} documents indexés`);
   } catch (err) {
     const msg = formatErrorMessage(err);
-    setText('doc-count', `Erreur: ${msg}`);
     showErrorToast(msg);
   }
 }
@@ -148,7 +147,6 @@ async function openDocument(docId, fallbackTitle) {
     if (queryInput) queryInput.value = title;
   } catch (err) {
     const msg = formatErrorMessage(err);
-    setText('doc-count', `Erreur document: ${msg}`);
     showErrorToast(msg);
   }
 }
@@ -284,8 +282,7 @@ async function runSearch() {
   } catch (err) {
     const msg = formatErrorMessage(err);
     if (loader) loader.classList.add('hidden');
-    if (synthContainer) synthContainer.classList.remove('hidden');
-    if (synthText) synthText.textContent = `Erreur: ${msg}`;
+    if (synthContainer) synthContainer.classList.add('hidden');
     if (sourcesContainer) sourcesContainer.classList.add('hidden');
     showErrorToast(msg);
   }

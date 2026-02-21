@@ -186,3 +186,13 @@ Task: T-018
 Commit: 8b15717
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-019] Limiter l'affichage des erreurs backend au toast uniquement
+
+Context: Les erreurs etaient affichees a la fois en toast et dans des zones inline (compteur docs/synthese), ce qui dupliquait le signal.
+Decision: Supprimer l'ecriture des messages d'erreur inline et conserver uniquement le toast rouge.
+Rationale: Feedback plus propre et conforme a l'exigence UX.
+Task: T-019
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
