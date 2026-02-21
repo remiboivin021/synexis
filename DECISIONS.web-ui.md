@@ -46,3 +46,13 @@ Task: T-004
 Commit: pending
 Impact: medium, localized
 Date: 2026-02-21
+
+### [D-005] Web en BM25-only par défaut pour éviter crash embeddings
+
+Context: Des segfaults surviennent lors des requêtes web en chemin hybride (embeddings + qdrant runtime), bloquant l'usage.
+Decision: Basculer la recherche web en BM25-only par défaut, avec activation explicite de l'hybride (checkbox UI / flag CLI).
+Rationale: Réduire le risque runtime par défaut tout en conservant la capacité hybride à la demande.
+Task: T-005
+Commit: pending
+Impact: medium, localized
+Date: 2026-02-21

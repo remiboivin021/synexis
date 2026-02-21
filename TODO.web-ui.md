@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] (none)
+- [ ] [T-005] make web search bm25-only by default and gate hybrid explicitly
 
 ---
 

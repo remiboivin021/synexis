@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from searchctl.config import AppConfig
-from searchctl.web import _is_under_roots, _read_doc_content, resolve_bind_host
+from searchctl.web import _is_under_roots, _read_doc_content, resolve_bind_host, should_use_vector
 
 
 def test_resolve_bind_host_accepts_local_defaults() -> None:
@@ -58,3 +58,9 @@ def test_read_doc_content_enforces_root_boundary(tmp_path: Path) -> None:
     }
     with pytest.raises(PermissionError, match="outside configured roots"):
         _read_doc_content(outside_doc, cfg)
+
+
+def test_should_use_vector_defaults_to_bm25_for_web_search() -> None:
+    assert should_use_vector(use_hybrid=False, summarize=False, summary_use_hybrid=False) is False
+    assert should_use_vector(use_hybrid=False, summarize=True, summary_use_hybrid=False) is False
+    assert should_use_vector(use_hybrid=True, summarize=False, summary_use_hybrid=False) is True

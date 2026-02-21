@@ -69,6 +69,7 @@ searchctl web [--config <path>] [--host 127.0.0.1] [--port 8080] [--allow-remote
 - indexed document listing and content reading
 
 Security default: non-local bind hosts are rejected unless `--allow-remote` is set.
+Runtime default: web search uses BM25-only by default; enable hybrid from the UI checkbox `hybride` (or start server with `--use-hybrid-default`).
 
 ## OpenRouter Summary
 

@@ -38,6 +38,10 @@ def resolve_bind_host(host: str, allow_remote: bool) -> str:
     raise ValueError("remote bind denied; pass --allow-remote explicitly")
 
 
+def should_use_vector(use_hybrid: bool, summarize: bool, summary_use_hybrid: bool) -> bool:
+    return use_hybrid or (summarize and summary_use_hybrid)
+
+
 def _normalize_text(text: str) -> str:
     no_accents = "".join(ch for ch in unicodedata.normalize("NFKD", text) if not unicodedata.combining(ch))
     return no_accents.lower()
@@ -126,11 +130,12 @@ def _search_rows(
     top: int | None,
     summarize: bool,
     summary_top_k: int,
+    use_hybrid: bool,
     summary_use_hybrid: bool,
     strict: bool,
 ) -> dict[str, Any]:
     os_client = make_opensearch_client(cfg.opensearch.url)
-    use_vector = (not summarize) or summary_use_hybrid
+    use_vector = should_use_vector(use_hybrid, summarize, summary_use_hybrid)
     q_client = make_qdrant_client(cfg.qdrant.url) if use_vector else None
 
     try:
@@ -224,8 +229,9 @@ def _search_rows(
 
 
 class _WebState:
-    def __init__(self, cfg: AppConfig) -> None:
+    def __init__(self, cfg: AppConfig, use_hybrid_default: bool) -> None:
         self.cfg = cfg
+        self.use_hybrid_default = use_hybrid_default
 
 
 class SearchWebHandler(BaseHTTPRequestHandler):
@@ -331,6 +337,7 @@ class SearchWebHandler(BaseHTTPRequestHandler):
                 top=int(body.get("top")) if body.get("top") is not None else None,
                 summarize=bool(body.get("summarize", False)),
                 summary_top_k=int(body.get("summary_top_k", 8)),
+                use_hybrid=bool(body.get("use_hybrid", self._state().use_hybrid_default)),
                 summary_use_hybrid=bool(body.get("summary_use_hybrid", False)),
                 strict=bool(body.get("strict", False)),
             )
@@ -387,6 +394,7 @@ def _build_index_html() -> str:
       <div class=\"row\">
         <input id=\"query\" placeholder=\"Requête\" style=\"flex:1\" />
         <label><input id=\"summarize\" type=\"checkbox\" /> synthèse</label>
+        <label><input id=\"useHybrid\" type=\"checkbox\" /> hybride</label>
         <button id=\"searchBtn\">Rechercher</button>
       </div>
       <div id=\"summary\" class=\"muted\" style=\"margin-top:8px\"></div>
@@ -417,8 +425,9 @@ def _build_index_html() -> str:
       const query = document.getElementById('query').value.trim();
       if (!query) return;
       const summarize = document.getElementById('summarize').checked;
+      const use_hybrid = document.getElementById('useHybrid').checked;
       try {
-        const out = await api('/api/search', {query, summarize});
+        const out = await api('/api/search', {query, summarize, use_hybrid});
         setText('summary', summarize ? (out.summary || '') : '');
         const root = document.getElementById('results');
         root.innerHTML = '';
@@ -473,11 +482,17 @@ def _build_index_html() -> str:
 """
 
 
-def serve_web(config_path: str, host: str, port: int, allow_remote: bool) -> None:
+def serve_web(
+    config_path: str,
+    host: str,
+    port: int,
+    allow_remote: bool,
+    use_hybrid_default: bool = False,
+) -> None:
     cfg = load_config(config_path)
     bind_host = resolve_bind_host(host, allow_remote)
     server = ThreadingHTTPServer((bind_host, port), SearchWebHandler)
-    server.state = _WebState(cfg)  # type: ignore[attr-defined]
+    server.state = _WebState(cfg, use_hybrid_default)  # type: ignore[attr-defined]
     print(f"Synexis web UI available at http://{bind_host}:{port}")
     try:
         server.serve_forever()

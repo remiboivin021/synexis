@@ -548,10 +548,15 @@ def web(
         "--allow-remote",
         help="Allow non-local bind host (disabled by default).",
     ),
+    use_hybrid_default: bool = typer.Option(
+        False,
+        "--use-hybrid-default",
+        help="Enable hybrid vector search by default in web UI (may trigger heavy runtime).",
+    ),
 ) -> None:
     from searchctl.web import serve_web
 
-    serve_web(config, host, port, allow_remote)
+    serve_web(config, host, port, allow_remote, use_hybrid_default)
 
 
 if __name__ == "__main__":
