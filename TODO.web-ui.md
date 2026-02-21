@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-009] fix fastapi request typing causing 422 on /api/search and add regression test
+- [ ] (none)
 
 ---
 
@@ -44,3 +44,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-006] add markdown rendering in web document viewer with safe html output | commit: 1735a13
 - [x] [T-007] render markdown-formatted synthesis in left web panel with safe html | commit: 4323c2d
 - [x] [T-008] refactor web backend from stdlib server to FastAPI while keeping existing API behavior | commit: 803b9ef
+- [x] [T-009] fix fastapi request typing causing 422 on /api/search and add regression test | commit: 03bfdc8

@@ -93,6 +93,6 @@ Context: `POST /api/search` renvoyait 422 car l'annotation `Request` (import loc
 Decision: Importer `FastAPI`, `Request`, `HTMLResponse`, `JSONResponse` au niveau module et ajouter un test de non-régression endpoint.
 Rationale: Rétablir l'injection correcte de `Request` par FastAPI et stabiliser le contrat API.
 Task: T-009
-Commit: pending
+Commit: 03bfdc8
 Impact: low, localized
 Date: 2026-02-21
