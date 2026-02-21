@@ -163,6 +163,6 @@ Context: Les erreurs backend n'etaient visibles qu'en texte inline et manquaient
 Decision: Ajouter un toast rouge dans le coin haut droit, avec animation d'entree de droite vers gauche et auto-disparition.
 Rationale: Ameliorer le feedback utilisateur sans changer les contrats API backend.
 Task: T-016
-Commit: pending
+Commit: d285c1c
 Impact: low, localized
 Date: 2026-02-21
