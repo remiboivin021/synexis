@@ -50,3 +50,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-012] wire redesigned index template to real api data and remove mock frontend script | commit: a7f659b
 - [x] [T-013] render synthesis markdown in redesigned template using summary_html | commit: 566e4e1
 - [x] [T-014] animate synthesis markdown progressive reveal for a more professional reading experience | commit: 0d99fa5
+- [x] [T-015] switch synthesis animation to word-by-word markdown rendering | commit: pending

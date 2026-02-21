@@ -84,51 +84,54 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function animateReveal(node) {
-  if (!(node instanceof HTMLElement)) return;
-  node.classList.add('reveal-item');
-  requestAnimationFrame(() => node.classList.add('reveal-item-visible'));
+function buildWordStreamsFromHtml(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const streams = [];
+
+  function cloneNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const textNode = document.createTextNode('');
+      const tokens = (node.textContent || '').match(/\S+\s*/g) || [];
+      if (tokens.length) streams.push({ target: textNode, tokens });
+      return textNode;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node.cloneNode(false);
+      for (const child of node.childNodes) {
+        el.appendChild(cloneNode(child));
+      }
+      return el;
+    }
+    return document.createTextNode('');
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const child of tpl.content.childNodes) {
+    fragment.appendChild(cloneNode(child));
+  }
+  return { fragment, streams };
 }
 
-async function renderSummaryHtmlProgressive(target, html) {
+async function renderSummaryHtmlWordByWord(target, html) {
   target.innerHTML = '';
-  const buffer = document.createElement('div');
-  buffer.innerHTML = html;
-
-  const children = Array.from(buffer.children);
-  if (!children.length) {
+  const { fragment, streams } = buildWordStreamsFromHtml(html);
+  if (!streams.length) {
     target.innerHTML = html;
     return;
   }
+  target.appendChild(fragment);
+  target.classList.add('typing-cursor');
 
-  for (const child of children) {
-    const tag = child.tagName.toLowerCase();
-    if (tag === 'ul' || tag === 'ol') {
-      const list = document.createElement(tag);
-      for (const cls of child.classList) list.classList.add(cls);
-      target.appendChild(list);
-      animateReveal(list);
-      await sleep(100);
-
-      const listItems = Array.from(child.children).filter((el) => el.tagName.toLowerCase() === 'li');
-      if (!listItems.length) {
-        list.innerHTML = child.innerHTML;
-        continue;
-      }
-      for (const item of listItems) {
-        const clone = item.cloneNode(true);
-        list.appendChild(clone);
-        animateReveal(clone);
-        await sleep(80);
-      }
-      continue;
+  let wordCount = streams.reduce((acc, s) => acc + s.tokens.length, 0);
+  const delay = wordCount > 220 ? 18 : 42;
+  for (const stream of streams) {
+    for (const token of stream.tokens) {
+      stream.target.textContent += token;
+      await sleep(delay);
     }
-
-    const clone = child.cloneNode(true);
-    target.appendChild(clone);
-    animateReveal(clone);
-    await sleep(130);
   }
+  target.classList.remove('typing-cursor');
 }
 
 function renderSources(results, sources) {
@@ -188,8 +191,7 @@ async function runSearch() {
     const summaryRaw = out.summary || 'Aucune synthèse disponible.';
     if (synthText) {
       if (out.summary_html) {
-        synthText.classList.remove('typing-cursor');
-        await renderSummaryHtmlProgressive(synthText, out.summary_html);
+        await renderSummaryHtmlWordByWord(synthText, out.summary_html);
       } else {
         await typeWriter(synthText, summaryRaw);
       }

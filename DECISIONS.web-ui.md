@@ -146,3 +146,13 @@ Task: T-014
 Commit: 0d99fa5
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-015] Passer l'animation de synthèse en mode mot-a-mot
+
+Context: Le rendu progressif par blocs restait trop abrupt pour l'effet visuel attendu.
+Decision: Afficher `summary_html` mot par mot en reconstruisant le DOM markdown avec des noeuds texte alimentes progressivement.
+Rationale: Obtenir un effet de lecture plus fluide sans perdre la structure HTML du markdown (titres/listes/code).
+Task: T-015
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
