@@ -133,6 +133,6 @@ Context: La vue synthèse du nouveau template affichait encore du texte brut ave
 Decision: Utiliser prioritairement `summary_html` (rendu markdown serveur) dans `#synthesis-text`, avec fallback typewriter sur `summary`.
 Rationale: Cohérence avec la capacité markdown déjà exposée par l'API et meilleure lisibilité.
 Task: T-013
-Commit: pending
+Commit: 566e4e1
 Impact: low, localized
 Date: 2026-02-21
