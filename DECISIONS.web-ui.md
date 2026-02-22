@@ -233,6 +233,6 @@ Context: Le template fourni contient des placeholders JS locaux (documents, rech
 Decision: Garder la structure/affichage tels quels et remplacer la couche donnees par des appels API reels (`/api/documents`, `/api/search`, `/api/documents/{id}`).
 Rationale: Respecter le design sans suppression de blocs visuels.
 Task: T-023
-Commit: pending
+Commit: d96f48b
 Impact: low, localized
 Date: 2026-02-21
