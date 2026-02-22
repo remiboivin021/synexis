@@ -276,3 +276,13 @@ Task: T-027
 Commit: 068d56a
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-028] Basculer l'activité en histogrammes dynamiques alignés calendrier
+
+Context: Le besoin métier impose une lecture calendaire stricte (mois en cours, semaine en cours, journée heure par heure).
+Decision: Exposer côté backend des séries labelisées (`activity_month`, `activity_week`, `activity_day`) et rendre trois histogrammes dédiés côté UI.
+Rationale: Respecter l'alignement temporel réel (ex: mardi 1) et rendre l'analyse d'activité plus précise.
+Task: T-028
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

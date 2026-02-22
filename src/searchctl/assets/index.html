@@ -115,9 +115,9 @@
                                 <button id="activity-tab-24h" onclick="switchActivityView('24h')" class="px-3 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-white">24h</button>
                             </div>
                         </div>
-                        <div id="activity-view-30d" class="grid grid-cols-10 gap-1 min-h-[130px]"></div>
-                        <div id="activity-view-7d" class="hidden h-36 flex items-end gap-2"></div>
-                        <div id="activity-view-24h" class="hidden h-36 flex items-end gap-1"></div>
+                        <div id="activity-view-30d" class="h-44 flex items-end gap-1"></div>
+                        <div id="activity-view-7d" class="hidden h-44 flex items-end gap-2"></div>
+                        <div id="activity-view-24h" class="hidden h-44 flex items-end gap-1"></div>
                     </div>
                     <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800">
                         <h3 class="font-bold mb-6 text-xs text-amber-400 uppercase">Volume Données</h3>
@@ -367,35 +367,36 @@
             return 'bg-emerald-700/35 border-emerald-700/30';
         }
 
-        function renderActivity30Calendar(points) {
-            const el = byId('activity-view-30d');
-            if (!el) return;
-            el.innerHTML = '';
-            const max = Math.max(...points, 0);
-            const now = new Date();
-            for (let i = 0; i < points.length; i += 1) {
-                const day = new Date(now);
-                day.setDate(now.getDate() - (points.length - 1 - i));
-                const cell = document.createElement('div');
-                cell.className = `h-7 rounded border ${activityIntensityClass(points[i], max)} flex items-center justify-center text-[10px] text-slate-200`;
-                cell.title = `${day.toLocaleDateString('fr-FR')} • ${points[i]} activité(s)`;
-                cell.textContent = String(day.getDate());
-                el.appendChild(cell);
-            }
-        }
-
-        function renderActivityBars(targetId, points) {
+        function renderActivityHistogram(targetId, series, opts = {}) {
             const el = byId(targetId);
             if (!el) return;
             el.innerHTML = '';
-            const max = Math.max(...points, 1);
+            const points = Array.isArray(series) ? series : [];
+            if (!points.length) {
+                el.innerHTML = '<div class=\"text-xs text-slate-500\">Aucune donnée.</div>';
+                return;
+            }
+            const max = Math.max(...points.map((p) => Number(p.value || 0)), 1);
+            const showEvery = Number(opts.showEvery || 1);
+            const dense = Boolean(opts.dense);
             for (let i = 0; i < points.length; i += 1) {
-                const v = points[i];
+                const p = points[i];
+                const value = Number(p.value || 0);
+                const wrap = document.createElement('div');
+                wrap.className = dense ? 'flex-1 min-w-[8px] flex flex-col justify-end items-center' : 'flex-1 min-w-[18px] flex flex-col justify-end items-center';
+
                 const bar = document.createElement('div');
-                bar.className = 'flex-1 min-w-[6px] rounded-t bg-emerald-500/60 hover:bg-emerald-400 transition-colors';
-                bar.style.height = `${Math.max(6, Math.round((v / max) * 100))}%`;
-                bar.title = `${v} activité(s)`;
-                el.appendChild(bar);
+                bar.className = 'w-full rounded-t bg-emerald-500/60 hover:bg-emerald-400 transition-colors';
+                bar.style.height = `${Math.max(6, Math.round((value / max) * 100))}%`;
+                bar.title = `${p.label || ''} • ${value} activité(s)`;
+                wrap.appendChild(bar);
+
+                const label = document.createElement('div');
+                label.className = dense ? 'mt-1 text-[9px] text-slate-500' : 'mt-1 text-[10px] text-slate-500';
+                label.textContent = i % showEvery === 0 ? String(p.label || '') : '';
+                wrap.appendChild(label);
+
+                el.appendChild(wrap);
             }
         }
 
@@ -448,9 +449,9 @@
                 const offset = circumference * (1 - Math.max(0, Math.min(100, hp)) / 100);
                 byId('health-circle').style.strokeDashoffset = String(offset.toFixed(1));
 
-                renderActivity30Calendar(out.activity_30d || out.activity || []);
-                renderActivityBars('activity-view-7d', out.activity_7d || []);
-                renderActivityBars('activity-view-24h', out.activity_24h || []);
+                renderActivityHistogram('activity-view-30d', out.activity_month || [], { dense: true, showEvery: 2 });
+                renderActivityHistogram('activity-view-7d', out.activity_week || [], { showEvery: 1 });
+                renderActivityHistogram('activity-view-24h', out.activity_day || [], { dense: true, showEvery: 3 });
 
                 const volume = out.volume || {};
                 byId('volume-notes').textContent = formatBytes(volume.notes_bytes || 0);

@@ -4,6 +4,7 @@ import json
 import re
 import time
 import unicodedata
+from datetime import datetime, timedelta
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -229,6 +230,69 @@ def _activity_hour_points(rows: list[dict[str, Any]], hours: int = 24) -> list[i
     return bins
 
 
+def _activity_month_series(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    first = datetime(year, month, 1)
+    if month == 12:
+        month_end = datetime(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        month_end = datetime(year, month + 1, 1) - timedelta(days=1)
+    days_in_month = month_end.day
+    counts = {day: 0 for day in range(1, days_in_month + 1)}
+    weekdays = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"]
+
+    for row in rows:
+        ts = int(row.get("updated_at") or 0)
+        if ts <= 0:
+            continue
+        dt = datetime.fromtimestamp(ts)
+        if dt.year == year and dt.month == month:
+            counts[dt.day] = counts.get(dt.day, 0) + 1
+
+    out: list[dict[str, Any]] = []
+    for day in range(1, days_in_month + 1):
+        dt = datetime(year, month, day)
+        out.append({"label": f"{weekdays[dt.weekday()]} {day}", "value": counts.get(day, 0), "day": day})
+    return out
+
+
+def _activity_week_series(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    today = datetime.now().date()
+    monday = today - timedelta(days=today.weekday())
+    weekdays = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"]
+    counts = {i: 0 for i in range(7)}
+
+    for row in rows:
+        ts = int(row.get("updated_at") or 0)
+        if ts <= 0:
+            continue
+        d = datetime.fromtimestamp(ts).date()
+        diff = (d - monday).days
+        if 0 <= diff < 7:
+            counts[diff] = counts.get(diff, 0) + 1
+
+    out: list[dict[str, Any]] = []
+    for i in range(7):
+        d = monday + timedelta(days=i)
+        out.append({"label": f"{weekdays[i]} {d.day}", "value": counts.get(i, 0), "day": d.day})
+    return out
+
+
+def _activity_today_hour_series(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    today = datetime.now().date()
+    counts = {h: 0 for h in range(24)}
+    for row in rows:
+        ts = int(row.get("updated_at") or 0)
+        if ts <= 0:
+            continue
+        dt = datetime.fromtimestamp(ts)
+        if dt.date() == today:
+            counts[dt.hour] = counts.get(dt.hour, 0) + 1
+    return [{"label": f"{h:02d}h", "value": counts.get(h, 0), "hour": h} for h in range(24)]
+
+
 def _time_ago_label(ts: int) -> str:
     if ts <= 0:
         return "Date inconnue"
@@ -308,6 +372,9 @@ def _dashboard_data(cfg: AppConfig, vault: str) -> dict[str, Any]:
     activity_30d = _activity_points(filtered, days=30)
     activity_7d = activity_30d[-7:] if len(activity_30d) >= 7 else _activity_points(filtered, days=7)
     activity_24h = _activity_hour_points(filtered, hours=24)
+    activity_month = _activity_month_series(filtered)
+    activity_week = _activity_week_series(filtered)
+    activity_day = _activity_today_hour_series(filtered)
 
     return {
         "vault": vault or "Global",
@@ -327,6 +394,9 @@ def _dashboard_data(cfg: AppConfig, vault: str) -> dict[str, Any]:
         "activity_30d": activity_30d,
         "activity_7d": activity_7d,
         "activity_24h": activity_24h,
+        "activity_month": activity_month,
+        "activity_week": activity_week,
+        "activity_day": activity_day,
         "recent": recent,
     }
 
