@@ -43,6 +43,6 @@ Context: Vector retrieval could return unrelated top-k chunks when the corpus do
 Decision: Add a retrieval-time lexical support filter on query terms; if no retrieved chunk contains query evidence, return an empty context so generation falls back to explicit unknown.
 Rationale: Enforces hallucination control from the NLSpec while preserving current architecture.
 Task: T-004
-Commit: pending
+Commit: 0de6b92
 Impact: low, localized
 Date: 2026-02-22
