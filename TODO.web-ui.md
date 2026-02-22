@@ -61,4 +61,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-023] replace template placeholder data with backend-driven values without changing layout blocks | commit: d96f48b
 - [x] [T-024] build vault tabs dynamically from configured vault roots and bind filtering | commit: 6586386
 - [x] [T-025] fix vault name inference to use first child under root (freelance/engineering) | commit: 0654a25
-- [x] [T-026] integrate ultimate hub template with real backend data and add dashboard api metrics | commit: pending
+- [x] [T-026] integrate ultimate hub template with real backend data and add dashboard api metrics | commit: 240b099

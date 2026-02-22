@@ -263,6 +263,6 @@ Context: Le template final introduit de nombreuses zones dynamiques (dashboard a
 Decision: Ajouter un endpoint `/api/dashboard` derivant les KPIs depuis la metadata (documents/chunks/fichiers), puis connecter tout le script du template aux APIs reelles.
 Rationale: Eliminer toutes les donnees simulees sans supprimer les blocs visuels du template.
 Task: T-026
-Commit: pending
+Commit: 240b099
 Impact: medium, localized
 Date: 2026-02-21
