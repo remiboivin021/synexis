@@ -59,4 +59,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-021] integrate side panel template and bind it to document api data | commit: 7327e64
 - [x] [T-022] restore dashboard/search tabs template and hydrate dashboard with backend data | commit: 47ca754
 - [x] [T-023] replace template placeholder data with backend-driven values without changing layout blocks | commit: d96f48b
-- [x] [T-024] build vault tabs dynamically from configured vault roots and bind filtering | commit: pending
+- [x] [T-024] build vault tabs dynamically from configured vault roots and bind filtering | commit: 6586386

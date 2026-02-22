@@ -243,6 +243,6 @@ Context: Les onglets vault etaient statiques (Travail/Personnel) et ne suivaient
 Decision: Exposer `/api/vaults` depuis `config.roots`, attacher chaque document a son vault cote backend, puis construire les onglets dynamiquement cote UI.
 Rationale: Synchroniser l'interface avec les vrais vaults sans maintenance manuelle.
 Task: T-024
-Commit: pending
+Commit: 6586386
 Impact: low, localized
 Date: 2026-02-21
