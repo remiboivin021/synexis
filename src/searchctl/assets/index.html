@@ -3,125 +3,546 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Second Cerveau</title>
+    <title>Second Brain AI - Multi-Vault</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .typing-cursor::after {
-            content: '|';
-            animation: blink 1s infinite;
-        }
-        @keyframes blink { opacity: 0; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); }
-        body { background-color: #0f172a; color: #f8fafc; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); }
+        .typing-cursor::after { content: '|'; animation: blink 1s infinite; color: #6366f1; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-3 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
-    <aside class="w-72 border-r border-slate-800 flex flex-col glass">
+    <aside class="w-72 border-r border-slate-800 flex flex-col glass z-30">
         <div class="p-6">
             <h2 class="text-xl font-bold flex items-center gap-2">
                 <i class="fas fa-brain text-indigo-500"></i> Second Brain
             </h2>
         </div>
 
-        <nav class="px-4 mb-6 space-y-1">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+        <nav class="px-4 mb-8 space-y-1">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
                 <i class="fas fa-chart-pie w-5"></i> Dashboard
             </button>
-            <button onclick="switchView('search')" id="nav-search" class="w-full flex items-center gap-3 px-4 py-2 rounded-lg bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-lg">
+            <button onclick="switchView('search')" id="nav-search" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-lg">
                 <i class="fas fa-search w-5"></i> Recherche & IA
             </button>
         </nav>
 
-        <div class="px-6 mb-2 flex items-center justify-between gap-2">
+        <div class="px-6 mb-4 flex justify-between items-center">
             <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Documents Indexés</span>
-            <span id="doc-count" class="text-[10px] text-slate-400">Chargement...</span>
+            <span id="docs-count" class="text-[10px] text-slate-400">...</span>
         </div>
+
         <div class="flex-1 overflow-y-auto px-4 space-y-1" id="document-list"></div>
+
+        <div class="p-4 border-t border-slate-800 text-[10px] text-slate-500 flex justify-between">
+            <span>Statut : Connecté</span>
+            <span>v1.3.0</span>
+        </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto relative bg-gradient-to-b from-slate-900 to-slate-950">
+    <main class="flex-1 relative overflow-hidden flex flex-col">
 
-        <section id="view-dashboard" class="hidden p-8 max-w-5xl mx-auto space-y-8">
-            <header>
-                <h1 class="text-3xl font-bold">Tableau de Bord</h1>
-                <p class="text-slate-400">Aperçu de votre base de connaissances</p>
+        <section id="view-dashboard" class="hidden h-full overflow-y-auto p-10 flex flex-col">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold">Tableaux de Bord</h1>
+
+                <div class="flex gap-8 border-b border-slate-800 mt-6">
+                    <button onclick="switchDashboardTab('db-general')" class="db-tab-btn pb-4 text-sm font-medium border-b-2 border-indigo-500 text-white" id="tab-db-general">Général</button>
+                    <button onclick="switchDashboardTab('db-stats')" class="db-tab-btn pb-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-white transition-all" id="tab-db-stats">Analyses</button>
+                    <button onclick="switchDashboardTab('db-recent')" class="db-tab-btn pb-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-white transition-all" id="tab-db-recent">Flux récents</button>
+                </div>
             </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700">
-                    <div class="text-slate-500 text-sm">Documents total</div>
-                    <div id="dashboard-doc-count" class="text-2xl font-bold mt-1">-</div>
+            <div id="db-general" class="tab-content active space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50">
+                        <div class="text-slate-500 text-xs font-bold uppercase">Vaults Actifs</div>
+                        <div id="kpi-vaults" class="text-3xl font-bold mt-2">-</div>
+                    </div>
+                    <div class="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50">
+                        <div class="text-indigo-400 text-xs font-bold uppercase">Total Indexé</div>
+                        <div id="kpi-total" class="text-3xl font-bold mt-2">-</div>
+                    </div>
+                    <div class="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50">
+                        <div class="text-emerald-400 text-xs font-bold uppercase">Santé IA</div>
+                        <div id="kpi-health" class="text-3xl font-bold mt-2">Optimale</div>
+                    </div>
                 </div>
-                <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700">
-                    <div class="text-slate-500 text-sm">Dernières sources IA</div>
-                    <div id="dashboard-last-sources" class="text-2xl font-bold mt-1 text-indigo-400">-</div>
-                </div>
-                <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700">
-                    <div class="text-slate-500 text-sm">Type majoritaire</div>
-                    <div id="dashboard-top-type" class="text-2xl font-bold mt-1">-</div>
-                </div>
-                <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700">
-                    <div class="text-slate-500 text-sm">État index</div>
-                    <div id="dashboard-index-status" class="text-2xl font-bold mt-1 text-emerald-400">Actif</div>
+                <div class="bg-indigo-600/10 border border-indigo-500/20 p-8 rounded-3xl">
+                    <h3 class="font-bold text-indigo-300">Bienvenue dans votre cerveau augmenté</h3>
+                    <p id="dashboard-summary" class="text-slate-400 mt-2 text-sm leading-relaxed">Chargement des métriques...</p>
                 </div>
             </div>
 
-            <div class="bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
-                <h3 class="font-bold mb-4">Documents récents</h3>
-                <div id="dashboard-recent-docs" class="space-y-3 text-sm text-slate-300"></div>
+            <div id="db-stats" class="tab-content space-y-8">
+                <div class="bg-slate-800/20 p-8 rounded-3xl border border-slate-800">
+                    <h3 class="font-bold mb-4">Répartition des connaissances</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-xs mb-1"><span>Travail</span><span id="stat-travail-label">0%</span></div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden"><div id="stat-travail-bar" class="bg-indigo-500 h-full" style="width: 0%"></div></div>
+
+                        <div class="flex justify-between text-xs mb-1"><span>Personnel</span><span id="stat-personnel-label">0%</span></div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden"><div id="stat-personnel-bar" class="bg-emerald-500 h-full" style="width: 0%"></div></div>
+
+                        <div class="flex justify-between text-xs mb-1"><span>Autres</span><span id="stat-autres-label">0%</span></div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden"><div id="stat-autres-bar" class="bg-rose-500 h-full" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="db-recent" class="tab-content space-y-4">
+                <div id="recent-feed"></div>
             </div>
         </section>
 
-        <section id="view-search" class="p-8">
-            <header class="flex flex-col items-center mt-12 mb-12">
-                <h1 class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Que cherchez-vous ?</h1>
-                <div class="w-full max-w-3xl relative">
-                    <input type="text" id="search-input"
-                        placeholder="Interrogez vos documents..."
-                        class="w-full bg-slate-800/80 border border-slate-700 rounded-2xl py-5 px-6 pl-14 focus:ring-2 focus:ring-indigo-500 shadow-2xl backdrop-blur-sm">
-                    <i class="fas fa-wand-magic-sparkles absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400"></i>
-                    <button id="search-btn" onclick="runSearch()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-indigo-600 px-5 py-2 rounded-xl text-sm font-bold shadow-lg">Analyser</button>
-                </div>
-            </header>
+        <section id="view-search" class="h-full overflow-y-auto p-10 flex flex-col items-center">
 
-            <div class="max-w-3xl mx-auto space-y-8">
-                <div id="loader" class="hidden text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mx-auto"></div></div>
-                <article id="synthesis-container" class="hidden bg-slate-800/40 rounded-2xl p-8 border border-slate-700 shadow-xl">
-                    <div id="synthesis-text" class="text-slate-200 text-lg leading-relaxed italic border-l-4 border-indigo-500 pl-6"></div>
+            <div class="w-full max-w-3xl mt-12 mb-16">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-slate-800/80 p-1 rounded-xl flex gap-1 border border-slate-700">
+                        <button onclick="selectVault('Global')" class="vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white" id="v-Global">Global</button>
+                        <button onclick="selectVault('Travail')" class="vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white" id="v-Travail">Travail</button>
+                        <button onclick="selectVault('Personnel')" class="vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white" id="v-Personnel">Personnel</button>
+                    </div>
+                </div>
+
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-extrabold tracking-tight">Que souhaitez-vous synthétiser ?</h1>
+                    <p class="text-slate-500 mt-2">Recherche actuelle dans : <span id="current-vault-name" class="text-indigo-400 font-bold">Global</span></p>
+                </div>
+
+                <div class="relative group">
+                    <input type="text" id="search-input" placeholder="Posez une question à vos documents..."
+                        class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-5 px-6 pl-14 focus:ring-2 focus:ring-indigo-500 shadow-2xl backdrop-blur-md">
+                    <i class="fas fa-wand-magic-sparkles absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400"></i>
+                    <button onclick="runSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-indigo-600 px-6 py-2 rounded-xl text-sm font-bold transition-all active:scale-95">Analyser</button>
+                </div>
+            </div>
+
+            <div class="w-full max-w-3xl space-y-10">
+                <div id="loader" class="hidden text-center py-10"><div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent mx-auto"></div></div>
+                <article id="synthesis-container" class="hidden bg-slate-800/30 rounded-3xl p-8 border border-slate-700 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                    <h3 class="text-indigo-400 text-[10px] font-bold uppercase mb-6"><i class="fas fa-robot"></i> Synthèse du Vault <span id="synthesis-vault-tag">Global</span></h3>
+                    <div id="synthesis-text" class="text-slate-200 leading-relaxed text-lg italic"></div>
                 </article>
                 <div id="sources-container" class="hidden"><div id="sources-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
             </div>
         </section>
-
     </main>
 
-    <div id="side-panel" class="fixed top-0 right-0 h-full w-[450px] bg-slate-900 border-l border-slate-700 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col">
-        <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur-md">
-            <div>
-                <span id="panel-type" class="text-[10px] font-bold uppercase tracking-widest text-indigo-400">NOTE</span>
-                <h2 id="panel-title" class="text-xl font-bold text-white truncate w-64">Titre du document</h2>
-            </div>
-            <button onclick="closePanel()" class="text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-full transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+    <div id="side-panel" class="fixed top-0 right-0 h-full w-[500px] bg-slate-900 border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-500 ease-out z-50 flex flex-col">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center glass">
+            <div><span id="panel-type" class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Type</span><h2 id="panel-title" class="text-xl font-bold text-white truncate w-80">Titre</h2></div>
+            <button onclick="closePanel()" class="text-slate-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-800 transition-all"><i class="fas fa-times"></i></button>
         </div>
-
-        <div class="flex-1 overflow-y-auto p-8 prose prose-invert">
-            <div id="panel-content" class="text-slate-300 leading-relaxed space-y-4"></div>
-        </div>
-
-        <div class="p-6 border-t border-slate-800 bg-slate-900/80">
-            <button id="panel-open-original" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all">
-                <i class="fas fa-external-link-alt"></i> Ouvrir le fichier original
-            </button>
-        </div>
+        <div class="flex-1 overflow-y-auto p-10" id="panel-content"></div>
     </div>
+    <div id="panel-overlay" onclick="closePanel()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-40 opacity-0 transition-opacity"></div>
 
-    <div id="panel-overlay" onclick="closePanel()" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-40"></div>
+    <script>
+        let selectedVault = 'Global';
+        let documents = [];
 
-    <script src="/static/app.js"></script>
+        async function api(path, payload) {
+            const opts = payload
+                ? {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                }
+                : {};
+            const res = await fetch(path, opts);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || data.detail || ('HTTP ' + res.status));
+            return data;
+        }
+
+        function byId(id) { return document.getElementById(id); }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function formatErrorMessage(err) {
+            const raw = err instanceof Error && err.message ? err.message : String(err || '');
+            const oneLine = raw.replace(/[{}[\]"]/g, ' ').replace(/\s+/g, ' ').trim();
+            const lower = oneLine.toLowerCase();
+            const statusMatch = oneLine.match(/\b([1-5]\d{2})\b/);
+            const statusCode = statusMatch ? statusMatch[1] : '';
+
+            if (!oneLine) return 'Erreur serveur';
+            if (lower.includes('failed to fetch') || lower.includes('networkerror')) return 'Serveur inaccessible';
+            if (lower.includes('timeout')) return 'Délai dépassé';
+            if (lower.includes('http 400') || lower.includes('unprocessable') || lower.includes('422') || statusCode === '400' || statusCode === '422') return 'Requête invalide';
+            if (lower.includes('http 401') || lower.includes('http 403') || statusCode === '401' || statusCode === '403') return 'Accès refusé';
+            if (lower.includes('http 402') || statusCode === '402') return 'Crédit API insuffisant';
+            if (lower.includes('http 404') || statusCode === '404') return 'Ressource introuvable';
+            if (lower.includes('http 429') || statusCode === '429') return 'Trop de requêtes';
+            if (statusCode === '500' || statusCode === '502' || statusCode === '503' || statusCode === '504') return 'Erreur interne serveur';
+            if (lower.includes('qdrant')) return 'Service vectoriel indisponible';
+            if (lower.includes('opensearch') || lower.includes('tantivy')) return 'Index de recherche indisponible';
+            return oneLine.split(':').pop().trim() || 'Erreur serveur';
+        }
+
+        function showErrorToast(message) {
+            const container = byId('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = [
+                'pointer-events-auto', 'max-w-sm', 'bg-red-600/95', 'text-red-50', 'border', 'border-red-300/40',
+                'rounded-xl', 'shadow-2xl', 'px-4', 'py-3', 'text-sm', 'font-medium',
+                'translate-x-12', 'opacity-0', 'transition-all', 'duration-300', 'ease-out'
+            ].join(' ');
+            toast.innerHTML = `<div class="flex items-start gap-2"><i class="fas fa-triangle-exclamation mt-0.5"></i><div>Erreur backend: ${escapeHtml(message)}</div></div>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                toast.classList.add('-translate-x-3', 'opacity-0');
+                setTimeout(() => toast.remove(), 320);
+            }, 4200);
+        }
+
+        function inferVault(doc) {
+            const path = String(doc.path || '').toLowerCase();
+            const title = String(doc.title || '').toLowerCase();
+            if (path.includes('travail') || title.includes('travail') || path.includes('work')) return 'Travail';
+            if (path.includes('personnel') || title.includes('personnel') || path.includes('personal')) return 'Personnel';
+            return 'Global';
+        }
+
+        function sourceTypeLabel(sourceType) {
+            if (sourceType === 'pdf') return 'PDF';
+            if (sourceType === 'markdown') return 'NOTE';
+            return (sourceType || 'NOTE').toUpperCase();
+        }
+
+        function sourceTypeIcon(sourceType) {
+            if (sourceType === 'pdf') return 'fa-file-pdf text-red-400';
+            return 'fa-file-alt text-indigo-400';
+        }
+
+        function visibleDocuments() {
+            if (selectedVault === 'Global') return documents;
+            return documents.filter((doc) => doc.vault === selectedVault);
+        }
+
+        function renderDocumentList() {
+            const list = byId('document-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            const docs = visibleDocuments();
+            const countEl = byId('docs-count');
+            if (countEl) countEl.textContent = `${docs.length}`;
+
+            if (!docs.length) {
+                const empty = document.createElement('div');
+                empty.className = 'p-3 rounded-xl border border-slate-700 text-xs text-slate-500';
+                empty.textContent = 'Aucun document';
+                list.appendChild(empty);
+                return;
+            }
+
+            for (const doc of docs) {
+                const div = document.createElement('div');
+                div.onclick = () => openDocument(doc.doc_id);
+                div.className = 'p-3 rounded-xl hover:bg-slate-800 cursor-pointer transition-all flex items-center gap-3';
+                div.innerHTML = `
+                  <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center"><i class="far ${sourceTypeIcon(doc.source_type)} text-xs"></i></div>
+                  <div class="min-w-0">
+                    <div class="text-xs text-slate-200 truncate">${escapeHtml(doc.title || '(untitled)')}</div>
+                    <div class="text-[10px] text-slate-500 uppercase">${escapeHtml(doc.vault)}</div>
+                  </div>
+                `;
+                list.appendChild(div);
+            }
+        }
+
+        function updateDashboard() {
+            const total = documents.length;
+            const vaultCount = new Set(documents.map((d) => d.vault).filter((v) => v !== 'Global')).size;
+            byId('kpi-vaults').textContent = String(vaultCount || (total ? 1 : 0));
+            byId('kpi-total').textContent = `${total} docs`;
+
+            const work = documents.filter((d) => d.vault === 'Travail').length;
+            const personal = documents.filter((d) => d.vault === 'Personnel').length;
+            const other = Math.max(0, total - work - personal);
+            const pct = (n) => total ? Math.round((n * 100) / total) : 0;
+
+            const pWork = pct(work);
+            const pPersonal = pct(personal);
+            const pOther = Math.max(0, 100 - pWork - pPersonal);
+
+            byId('stat-travail-label').textContent = `${pWork}%`;
+            byId('stat-personnel-label').textContent = `${pPersonal}%`;
+            byId('stat-autres-label').textContent = `${pOther}%`;
+            byId('stat-travail-bar').style.width = `${pWork}%`;
+            byId('stat-personnel-bar').style.width = `${pPersonal}%`;
+            byId('stat-autres-bar').style.width = `${pOther}%`;
+
+            byId('dashboard-summary').textContent = total
+                ? `Vos coffres sont synchronisés. ${total} documents sont indexés et disponibles pour la recherche et la synthèse.`
+                : 'Aucun document indexé pour le moment.';
+
+            const feed = byId('recent-feed');
+            if (!feed) return;
+            feed.innerHTML = '';
+            const recent = [...documents].slice(0, 8);
+            if (!recent.length) {
+                feed.innerHTML = '<div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 text-sm text-slate-500">Aucune activité récente.</div>';
+                return;
+            }
+            for (const doc of recent) {
+                const item = document.createElement('div');
+                item.className = 'bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 flex items-center justify-between';
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="p-2 bg-indigo-500/20 text-indigo-400 rounded-lg"><i class="fas fa-file"></i></div>
+                        <div>
+                            <p class="text-sm font-medium truncate">${escapeHtml(doc.title || '(untitled)')}</p>
+                            <p class="text-[10px] text-slate-500 truncate">${escapeHtml(doc.path || '')}</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-emerald-400 font-bold uppercase">Indexé</span>
+                `;
+                feed.appendChild(item);
+            }
+        }
+
+        async function loadDocuments() {
+            try {
+                const out = await api('/api/documents');
+                documents = (out.documents || []).map((doc) => ({ ...doc, vault: inferVault(doc) }));
+                renderDocumentList();
+                updateDashboard();
+            } catch (err) {
+                showErrorToast(formatErrorMessage(err));
+            }
+        }
+
+        function switchDashboardTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
+            document.querySelectorAll('.db-tab-btn').forEach((b) => {
+                b.classList.remove('border-indigo-500', 'text-white');
+                b.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            byId(tabId).classList.add('active');
+            byId(`tab-${tabId}`).classList.add('border-indigo-500', 'text-white');
+        }
+
+        function switchView(viewName) {
+            byId('view-dashboard').classList.add('hidden');
+            byId('view-search').classList.add('hidden');
+            byId(`view-${viewName}`).classList.remove('hidden');
+
+            byId('nav-dashboard').classList.remove('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-500/20', 'shadow-lg');
+            byId('nav-search').classList.remove('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-500/20', 'shadow-lg');
+            byId('nav-dashboard').classList.add('text-slate-400');
+            byId('nav-search').classList.add('text-slate-400');
+
+            const active = byId(`nav-${viewName}`);
+            active.classList.remove('text-slate-400');
+            active.classList.add('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-500/20', 'shadow-lg');
+        }
+
+        function selectVault(vault) {
+            selectedVault = vault;
+            document.querySelectorAll('.vault-btn').forEach((btn) => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+            byId(`v-${vault}`).classList.add('bg-indigo-600', 'text-white');
+            byId('current-vault-name').innerText = vault;
+            byId('synthesis-vault-tag').innerText = vault;
+            renderDocumentList();
+        }
+
+        function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+        function buildWordStreamsFromHtml(html) {
+            const tpl = document.createElement('template');
+            tpl.innerHTML = html;
+            const streams = [];
+
+            function cloneNode(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const textNode = document.createTextNode('');
+                    const tokens = (node.textContent || '').match(/\S+\s*/g) || [];
+                    if (tokens.length) streams.push({ target: textNode, tokens });
+                    return textNode;
+                }
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const el = node.cloneNode(false);
+                    for (const child of node.childNodes) el.appendChild(cloneNode(child));
+                    return el;
+                }
+                return document.createTextNode('');
+            }
+
+            const fragment = document.createDocumentFragment();
+            for (const child of tpl.content.childNodes) fragment.appendChild(cloneNode(child));
+            return { fragment, streams };
+        }
+
+        async function renderSummaryHtmlWordByWord(target, html) {
+            target.innerHTML = '';
+            const { fragment, streams } = buildWordStreamsFromHtml(html);
+            if (!streams.length) {
+                target.innerHTML = html;
+                return;
+            }
+            target.appendChild(fragment);
+            target.classList.add('typing-cursor');
+            const words = streams.reduce((acc, s) => acc + s.tokens.length, 0);
+            const delay = words > 220 ? 18 : 42;
+            for (const stream of streams) {
+                for (const token of stream.tokens) {
+                    stream.target.textContent += token;
+                    await sleep(delay);
+                }
+            }
+            target.classList.remove('typing-cursor');
+        }
+
+        function findDocIdFromSource(source) {
+            if (source.doc_id) return source.doc_id;
+            const byPath = documents.find((d) => d.path && source.doc_path && d.path === source.doc_path);
+            if (byPath) return byPath.doc_id;
+            const byTitle = documents.find((d) => d.title && source.doc_title && d.title === source.doc_title);
+            return byTitle ? byTitle.doc_id : null;
+        }
+
+        function renderSources(sources) {
+            const grid = byId('sources-grid');
+            grid.innerHTML = '';
+            byId('sources-container').classList.remove('hidden');
+
+            const scoped = (selectedVault === 'Global')
+                ? sources
+                : sources.filter((s) => {
+                    const hay = `${s.doc_path || ''} ${s.doc_title || ''}`.toLowerCase();
+                    return hay.includes(selectedVault.toLowerCase());
+                });
+
+            const items = (scoped.length ? scoped : sources).slice(0, 8);
+            if (!items.length) {
+                byId('sources-container').classList.add('hidden');
+                return;
+            }
+
+            for (const src of items) {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 hover:border-indigo-500 cursor-pointer transition-all';
+                card.innerHTML = `
+                  <div class="text-[9px] text-indigo-400 font-bold mb-2 uppercase">SOURCE</div>
+                  <div class="text-sm font-bold text-white line-clamp-2">${escapeHtml(src.doc_title || '(untitled)')}</div>
+                  <div class="text-[10px] text-slate-500 mt-2 truncate">${escapeHtml(src.doc_path || '')}</div>
+                `;
+                const docId = findDocIdFromSource(src);
+                if (docId) card.onclick = () => openDocument(docId);
+                grid.appendChild(card);
+            }
+        }
+
+        async function runSearch() {
+            const input = byId('search-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            byId('loader').classList.remove('hidden');
+            byId('synthesis-container').classList.add('hidden');
+            byId('sources-container').classList.add('hidden');
+            byId('synthesis-text').innerHTML = '';
+            byId('synthesis-vault-tag').innerText = selectedVault;
+
+            try {
+                const out = await api('/api/search', {
+                    query,
+                    summarize: true,
+                    use_hybrid: false,
+                    summary_top_k: 8,
+                });
+
+                byId('loader').classList.add('hidden');
+                byId('synthesis-container').classList.remove('hidden');
+
+                if (out.summary_html) await renderSummaryHtmlWordByWord(byId('synthesis-text'), out.summary_html);
+                else byId('synthesis-text').textContent = out.summary || 'Aucune synthèse disponible.';
+
+                renderSources(out.sources || []);
+            } catch (err) {
+                byId('loader').classList.add('hidden');
+                byId('synthesis-container').classList.add('hidden');
+                byId('sources-container').classList.add('hidden');
+                showErrorToast(formatErrorMessage(err));
+            }
+        }
+
+        async function openDocument(docId) {
+            try {
+                const out = await api('/api/documents/' + encodeURIComponent(docId));
+                byId('panel-type').innerText = sourceTypeLabel(out.source_type || 'note');
+                byId('panel-title').innerText = out.title || 'Document';
+
+                if (out.rendered_html) byId('panel-content').innerHTML = out.rendered_html;
+                else byId('panel-content').innerHTML = `<pre class="whitespace-pre-wrap break-words text-slate-300">${escapeHtml(out.content || '')}</pre>`;
+
+                byId('side-panel').classList.remove('translate-x-full');
+                byId('panel-overlay').classList.remove('hidden');
+                setTimeout(() => { byId('panel-overlay').style.opacity = '1'; }, 10);
+            } catch (err) {
+                showErrorToast(formatErrorMessage(err));
+            }
+        }
+
+        function closePanel() {
+            byId('side-panel').classList.add('translate-x-full');
+            byId('panel-overlay').style.opacity = '0';
+            setTimeout(() => byId('panel-overlay').classList.add('hidden'), 500);
+        }
+
+        function init() {
+            byId('search-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') runSearch();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePanel();
+            });
+
+            switchView('search');
+            switchDashboardTab('db-general');
+            selectVault('Global');
+            loadDocuments();
+        }
+
+        init();
+    </script>
 </body>
 </html>

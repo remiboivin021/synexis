@@ -226,3 +226,13 @@ Task: T-022
 Commit: 47ca754
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-023] Conserver le template complet et remplacer uniquement les donnees fake par le backend
+
+Context: Le template fourni contient des placeholders JS locaux (documents, recherche simulee) mais l'affichage doit rester identique.
+Decision: Garder la structure/affichage tels quels et remplacer la couche donnees par des appels API reels (`/api/documents`, `/api/search`, `/api/documents/{id}`).
+Rationale: Respecter le design sans suppression de blocs visuels.
+Task: T-023
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21
