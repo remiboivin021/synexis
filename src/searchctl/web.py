@@ -214,6 +214,21 @@ def _activity_points(rows: list[dict[str, Any]], days: int = 30) -> list[int]:
     return bins
 
 
+def _activity_hour_points(rows: list[dict[str, Any]], hours: int = 24) -> list[int]:
+    now = int(time.time())
+    hour_sec = 3_600
+    bins = [0 for _ in range(hours)]
+    for row in rows:
+        updated = int(row.get("updated_at") or 0)
+        if updated <= 0:
+            continue
+        age_hours = (now - updated) // hour_sec
+        if 0 <= age_hours < hours:
+            idx = hours - 1 - int(age_hours)
+            bins[idx] += 1
+    return bins
+
+
 def _time_ago_label(ts: int) -> str:
     if ts <= 0:
         return "Date inconnue"
@@ -290,6 +305,10 @@ def _dashboard_data(cfg: AppConfig, vault: str) -> dict[str, Any]:
                 ).fetchone()[0]
             )
 
+    activity_30d = _activity_points(filtered, days=30)
+    activity_7d = activity_30d[-7:] if len(activity_30d) >= 7 else _activity_points(filtered, days=7)
+    activity_24h = _activity_hour_points(filtered, hours=24)
+
     return {
         "vault": vault or "Global",
         "kpis": {
@@ -304,7 +323,10 @@ def _dashboard_data(cfg: AppConfig, vault: str) -> dict[str, Any]:
         "volume": sizes,
         "sources": source_counts,
         "concepts": _top_terms_from_titles(filtered, limit=24),
-        "activity": _activity_points(filtered, days=30),
+        "activity": activity_30d,
+        "activity_30d": activity_30d,
+        "activity_7d": activity_7d,
+        "activity_24h": activity_24h,
         "recent": recent,
     }
 

@@ -107,13 +107,17 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800">
-                        <h3 class="font-bold mb-6 text-xs text-emerald-400 uppercase">Activité (30j)</h3>
-                        <div class="h-32">
-                            <svg viewBox="0 0 400 100" class="w-full h-full">
-                                <path id="activity-line" d="M0,80 L400,80" fill="none" stroke="#10b981" stroke-width="3" />
-                                <path id="activity-area" d="M0,80 L400,80 L400,100 L0,100 Z" fill="#10b981" opacity="0.1" />
-                            </svg>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-xs text-emerald-400 uppercase">Activité</h3>
+                            <div class="flex gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+                                <button id="activity-tab-30d" onclick="switchActivityView('30d')" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/20 text-emerald-300">30j</button>
+                                <button id="activity-tab-7d" onclick="switchActivityView('7d')" class="px-3 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-white">7j</button>
+                                <button id="activity-tab-24h" onclick="switchActivityView('24h')" class="px-3 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-white">24h</button>
+                            </div>
                         </div>
+                        <div id="activity-view-30d" class="grid grid-cols-10 gap-1 min-h-[130px]"></div>
+                        <div id="activity-view-7d" class="hidden h-36 flex items-end gap-2"></div>
+                        <div id="activity-view-24h" class="hidden h-36 flex items-end gap-1"></div>
                     </div>
                     <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800">
                         <h3 class="font-bold mb-6 text-xs text-amber-400 uppercase">Volume Données</h3>
@@ -343,20 +347,56 @@
             }
         }
 
-        function buildActivityPath(points) {
-            const width = 400;
-            const height = 100;
-            if (!points.length) return { line: `M0,80 L${width},80`, area: `M0,80 L${width},80 L${width},100 L0,100 Z` };
+        function switchActivityView(view) {
+            const views = ['30d', '7d', '24h'];
+            for (const v of views) {
+                byId(`activity-view-${v}`).classList.toggle('hidden', v !== view);
+                const tab = byId(`activity-tab-${v}`);
+                if (!tab) continue;
+                if (v === view) tab.className = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/20 text-emerald-300';
+                else tab.className = 'px-3 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:text-white';
+            }
+        }
+
+        function activityIntensityClass(value, max) {
+            if (!max || value <= 0) return 'bg-slate-800 border-slate-800';
+            const ratio = value / max;
+            if (ratio >= 0.75) return 'bg-emerald-400/80 border-emerald-300/50';
+            if (ratio >= 0.5) return 'bg-emerald-500/60 border-emerald-400/40';
+            if (ratio >= 0.25) return 'bg-emerald-600/45 border-emerald-500/30';
+            return 'bg-emerald-700/35 border-emerald-700/30';
+        }
+
+        function renderActivity30Calendar(points) {
+            const el = byId('activity-view-30d');
+            if (!el) return;
+            el.innerHTML = '';
+            const max = Math.max(...points, 0);
+            const now = new Date();
+            for (let i = 0; i < points.length; i += 1) {
+                const day = new Date(now);
+                day.setDate(now.getDate() - (points.length - 1 - i));
+                const cell = document.createElement('div');
+                cell.className = `h-7 rounded border ${activityIntensityClass(points[i], max)} flex items-center justify-center text-[10px] text-slate-200`;
+                cell.title = `${day.toLocaleDateString('fr-FR')} • ${points[i]} activité(s)`;
+                cell.textContent = String(day.getDate());
+                el.appendChild(cell);
+            }
+        }
+
+        function renderActivityBars(targetId, points) {
+            const el = byId(targetId);
+            if (!el) return;
+            el.innerHTML = '';
             const max = Math.max(...points, 1);
-            const step = width / Math.max(points.length - 1, 1);
-            const coords = points.map((v, i) => {
-                const x = i * step;
-                const y = 90 - Math.round((v / max) * 65);
-                return { x, y };
-            });
-            const line = `M${coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' L')}`;
-            const area = `${line} L${width},100 L0,100 Z`;
-            return { line, area };
+            for (let i = 0; i < points.length; i += 1) {
+                const v = points[i];
+                const bar = document.createElement('div');
+                bar.className = 'flex-1 min-w-[6px] rounded-t bg-emerald-500/60 hover:bg-emerald-400 transition-colors';
+                bar.style.height = `${Math.max(6, Math.round((v / max) * 100))}%`;
+                bar.title = `${v} activité(s)`;
+                el.appendChild(bar);
+            }
         }
 
         async function refreshDashboard() {
@@ -387,7 +427,17 @@
                 const concepts = out.concepts || [];
                 const cloud = byId('word-cloud');
                 cloud.innerHTML = concepts.length
-                    ? concepts.map((c, i) => `<span class="${i % 2 === 0 ? 'text-2xl font-black' : 'text-sm text-slate-500 font-bold'}">${escapeHtml(c.term)}</span>`).join('')
+                    ? concepts.map((c) => {
+                        const w = Number(c.weight || 0);
+                        const cls = w >= 0.75
+                            ? 'text-3xl font-black text-white'
+                            : w >= 0.5
+                                ? 'text-2xl font-extrabold text-slate-200'
+                                : w >= 0.3
+                                    ? 'text-lg font-bold text-slate-300'
+                                    : 'text-sm font-semibold text-slate-500';
+                        return `<span class="${cls}" title="${Number(c.count || 0)} occurrence(s)">${escapeHtml(c.term)}</span>`;
+                    }).join('')
                     : '<span class="text-slate-500 text-sm">Pas de concepts disponibles.</span>';
 
                 const hp = Number(k.health_pct ?? 0);
@@ -398,9 +448,9 @@
                 const offset = circumference * (1 - Math.max(0, Math.min(100, hp)) / 100);
                 byId('health-circle').style.strokeDashoffset = String(offset.toFixed(1));
 
-                const activity = buildActivityPath(out.activity || []);
-                byId('activity-line').setAttribute('d', activity.line);
-                byId('activity-area').setAttribute('d', activity.area);
+                renderActivity30Calendar(out.activity_30d || out.activity || []);
+                renderActivityBars('activity-view-7d', out.activity_7d || []);
+                renderActivityBars('activity-view-24h', out.activity_24h || []);
 
                 const volume = out.volume || {};
                 byId('volume-notes').textContent = formatBytes(volume.notes_bytes || 0);
@@ -626,6 +676,7 @@
 
             switchView('search');
             switchDashboardTab('db-general');
+            switchActivityView('30d');
             await loadVaults();
             await loadDocuments();
             await refreshDashboard();
