@@ -51,6 +51,10 @@ def ingest_path(
 
         enriched = Document(page_content=doc.page_content, metadata={**doc.metadata, "doc_id": doc_id, "source": source})
         chunks = chunk_documents([enriched], chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap)
+        chunks = [
+            Document(page_content=c.page_content, metadata=_clean_metadata(c.metadata))
+            for c in chunks
+        ]
 
         if not dry_run:
             if previous:
@@ -89,3 +93,13 @@ def ingest_path(
         "dry_run": dry_run,
         "manifest_path": str(config.persist_path / "manifest.json"),
     }
+
+
+def _clean_metadata(metadata: dict) -> dict:
+    out: dict = {}
+    for key, value in metadata.items():
+        if value is None:
+            continue
+        if isinstance(value, (str, int, float, bool)):
+            out[str(key)] = value
+    return out

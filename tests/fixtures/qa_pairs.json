@@ -1,0 +1,14 @@
+[
+  {
+    "question": "What does LangChain combine in RAG?",
+    "expected_source": "doc1.md"
+  },
+  {
+    "question": "Which vector database is used for local development?",
+    "expected_source": "doc2.txt"
+  },
+  {
+    "question": "What should the assistant say when context is missing?",
+    "expected_source": "doc3.md"
+  }
+]

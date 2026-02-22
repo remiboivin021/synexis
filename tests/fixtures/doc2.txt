@@ -1,0 +1,2 @@
+Chroma is a vector database used for local development in many RAG setups.
+It can persist embeddings and metadata on disk for later queries.

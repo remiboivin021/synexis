@@ -13,6 +13,16 @@ Context: The repository already contains a working `searchctl` implementation wi
 Decision: Implement NLSpec RAG as a new additive package under `src/rag` and keep existing `searchctl` untouched.
 Rationale: Satisfies the new spec while minimizing blast radius and avoiding feature regression.
 Task: T-001
-Commit: pending
+Commit: d22b3c9
 Impact: medium, module
+Date: 2026-02-22
+
+### [D-002] Avoid LCEL parser imports that trigger torch runtime crashes in this environment
+
+Context: Importing `langchain_core.output_parsers` caused a segmentation fault via a transitive `transformers/torch` import chain during tests.
+Decision: Keep LCEL composition but implement generation flow with `RunnablePassthrough` + `RunnableLambda` only.
+Rationale: Preserves spec compliance and chain composability while keeping runtime stable.
+Task: T-002
+Commit: pending
+Impact: low, localized
 Date: 2026-02-22

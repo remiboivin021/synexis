@@ -20,13 +20,12 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-001] implement rag package core modules and cli according to rag.nlspec
+- [ ] [T-003] wire packaging env scripts and docs for rag quickstart
 
 ---
 
 # Next Tasks
-- [ ] [T-002] add deterministic fixtures and tests for ingestion retrieval generation
-- [ ] [T-003] wire packaging env scripts and docs for rag quickstart
+- [ ] (none)
 
 ---
 
@@ -37,3 +36,5 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 
 # Done
 - [x] [T-000] initialize rag feature state and execution artifacts | commit: 8d6e461
+- [x] [T-001] implement rag package core modules and cli according to rag.nlspec | commit: d22b3c9
+- [x] [T-002] add deterministic fixtures and tests for ingestion retrieval generation | commit: pending
