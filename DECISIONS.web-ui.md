@@ -283,6 +283,6 @@ Context: Le besoin métier impose une lecture calendaire stricte (mois en cours,
 Decision: Exposer côté backend des séries labelisées (`activity_month`, `activity_week`, `activity_day`) et rendre trois histogrammes dédiés côté UI.
 Rationale: Respecter l'alignement temporel réel (ex: mardi 1) et rendre l'analyse d'activité plus précise.
 Task: T-028
-Commit: pending
+Commit: aaeb320
 Impact: low, localized
 Date: 2026-02-21
