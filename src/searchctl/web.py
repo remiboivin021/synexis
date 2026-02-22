@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import unicodedata
 from html import escape
 from pathlib import Path
@@ -167,6 +168,145 @@ def _read_doc_content(doc: dict[str, Any], cfg: AppConfig) -> str:
         return cache_path.read_text(encoding="utf-8")
 
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def _safe_file_size(path_value: str, roots: list[str]) -> int:
+    try:
+        path = Path(path_value).resolve()
+    except Exception:
+        return 0
+    if not _is_under_roots(path, roots):
+        return 0
+    try:
+        return int(path.stat().st_size)
+    except OSError:
+        return 0
+
+
+def _top_terms_from_titles(rows: list[dict[str, Any]], limit: int = 24) -> list[dict[str, Any]]:
+    stop = STOPWORDS_FR | {"sur", "avec", "dans", "sans", "pour", "from", "avec", "the", "and"}
+    freq: dict[str, int] = {}
+    for row in rows:
+        title = _normalize_text(str(row.get("title") or ""))
+        for token in re.findall(r"[a-z0-9_]+", title):
+            if len(token) < 3 or token in stop:
+                continue
+            freq[token] = freq.get(token, 0) + 1
+    terms = sorted(freq.items(), key=lambda item: (-item[1], item[0]))[:limit]
+    if not terms:
+        return []
+    top = max(v for _, v in terms)
+    return [{"term": k, "count": v, "weight": round(v / top, 3)} for k, v in terms]
+
+
+def _activity_points(rows: list[dict[str, Any]], days: int = 30) -> list[int]:
+    now = int(time.time())
+    day_sec = 86_400
+    bins = [0 for _ in range(days)]
+    for row in rows:
+        updated = int(row.get("updated_at") or 0)
+        if updated <= 0:
+            continue
+        age_days = (now - updated) // day_sec
+        if 0 <= age_days < days:
+            idx = days - 1 - int(age_days)
+            bins[idx] += 1
+    return bins
+
+
+def _time_ago_label(ts: int) -> str:
+    if ts <= 0:
+        return "Date inconnue"
+    delta = max(0, int(time.time()) - ts)
+    if delta < 60:
+        return "À l'instant"
+    if delta < 3600:
+        return f"Il y a {delta // 60} min"
+    if delta < 86_400:
+        return f"Il y a {delta // 3600} h"
+    return f"Il y a {delta // 86_400} j"
+
+
+def _dashboard_data(cfg: AppConfig, vault: str) -> dict[str, Any]:
+    db = MetadataDB(cfg.metadata.sqlite_path)
+    db.init_schema()
+    rows = [dict(row) for row in db.list_documents()]
+    for row in rows:
+        row["vault"] = _vault_name_for_path(str(row.get("path") or ""), cfg.roots)
+
+    filtered = rows
+    if vault and vault != "Global":
+        filtered = [row for row in rows if row.get("vault") == vault]
+
+    docs_total = len(filtered)
+    docs_indexed = sum(1 for row in filtered if str(row.get("status") or "") == "indexed")
+    health_pct = int(round((docs_indexed / docs_total) * 100)) if docs_total else 100
+    health_label = "Optimale" if health_pct >= 85 else ("Stable" if health_pct >= 65 else "À surveiller")
+
+    vault_names = sorted({str(row.get("vault") or "Global") for row in rows if str(row.get("vault") or "Global") != "Global"})
+    source_counts = {
+        "notes": sum(1 for row in filtered if str(row.get("source_type") or "") in {"markdown", "txt", "text"}),
+        "pdfs": sum(1 for row in filtered if str(row.get("source_type") or "") == "pdf"),
+        "other": sum(1 for row in filtered if str(row.get("source_type") or "") not in {"markdown", "txt", "text", "pdf"}),
+    }
+    sizes = {
+        "notes_bytes": sum(_safe_file_size(str(row.get("path") or ""), cfg.roots) for row in filtered if str(row.get("source_type") or "") in {"markdown", "txt", "text"}),
+        "pdfs_bytes": sum(_safe_file_size(str(row.get("path") or ""), cfg.roots) for row in filtered if str(row.get("source_type") or "") == "pdf"),
+    }
+    sizes["total_bytes"] = sizes["notes_bytes"] + sizes["pdfs_bytes"]
+
+    by_hash: dict[str, int] = {}
+    for row in filtered:
+        h = str(row.get("content_hash") or "").strip()
+        if not h:
+            continue
+        by_hash[h] = by_hash.get(h, 0) + 1
+    duplicate_count = sum(count - 1 for count in by_hash.values() if count > 1)
+
+    filtered_sorted = sorted(filtered, key=lambda row: int(row.get("updated_at") or 0), reverse=True)
+    recent = [
+        {
+            "doc_id": row.get("doc_id"),
+            "title": row.get("title"),
+            "vault": row.get("vault"),
+            "source_type": row.get("source_type"),
+            "path": row.get("path"),
+            "updated_at": int(row.get("updated_at") or 0),
+            "time_ago": _time_ago_label(int(row.get("updated_at") or 0)),
+            "status": row.get("status"),
+        }
+        for row in filtered_sorted[:20]
+    ]
+
+    chunk_count = 0
+    if filtered:
+        doc_ids = [str(row.get("doc_id") or "") for row in filtered if row.get("doc_id")]
+        placeholders = ",".join("?" for _ in doc_ids)
+        if placeholders:
+            chunk_count = int(
+                db.conn.execute(
+                    f"SELECT COUNT(*) FROM chunks WHERE doc_id IN ({placeholders})",  # noqa: S608
+                    doc_ids,
+                ).fetchone()[0]
+            )
+
+    return {
+        "vault": vault or "Global",
+        "kpis": {
+            "vault_count": len(vault_names),
+            "docs_total": docs_total,
+            "analyses_ia": chunk_count,
+            "tags_active": len(_top_terms_from_titles(filtered, limit=48)),
+            "health_label": health_label,
+            "health_pct": health_pct,
+            "duplicates": duplicate_count,
+        },
+        "volume": sizes,
+        "sources": source_counts,
+        "concepts": _top_terms_from_titles(filtered, limit=24),
+        "activity": _activity_points(filtered, days=30),
+        "recent": recent,
+    }
 
 
 def _inline_markdown(text: str) -> str:
@@ -379,6 +519,13 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
         docs = db.list_documents()
         doc_paths = [str(row["path"]) for row in docs]
         return {"vaults": _vault_entries(cfg.roots, doc_paths)}
+
+    @app.get("/api/dashboard")
+    async def dashboard_api(vault: str = "Global") -> Any:
+        try:
+            return _dashboard_data(cfg, str(vault or "Global"))
+        except Exception as exc:
+            return _json_error(f"dashboard unavailable: {exc}", 500)
 
     @app.get("/api/documents")
     async def list_documents() -> Any:

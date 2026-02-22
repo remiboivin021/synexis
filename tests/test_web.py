@@ -8,6 +8,7 @@ from searchctl.config import AppConfig
 from searchctl.web import (
     _is_under_roots,
     _read_doc_content,
+    _vault_name_for_path,
     create_app,
     render_markdown_safe,
     resolve_bind_host,
@@ -39,6 +40,12 @@ def test_is_under_roots_detects_inside_and_outside(tmp_path: Path) -> None:
 
     assert _is_under_roots(inside, [str(root)]) is True
     assert _is_under_roots(outside, [str(root)]) is False
+
+
+def test_vault_name_for_path_uses_first_child_segment_under_root() -> None:
+    roots = ["/home/me/exocortex/vaults"]
+    assert _vault_name_for_path("/home/me/exocortex/vaults/Freelance/note.md", roots) == "Freelance"
+    assert _vault_name_for_path("/home/me/exocortex/vaults/Engineering/spec.md", roots) == "Engineering"
 
 
 def test_read_doc_content_enforces_root_boundary(tmp_path: Path) -> None:
@@ -120,3 +127,4 @@ def test_fastapi_static_routes_exist(tmp_path: Path) -> None:
     paths = {route.path for route in app.routes if hasattr(route, "path")}
     assert "/" in paths
     assert "/static" in paths
+    assert "/api/dashboard" in paths

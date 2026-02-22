@@ -256,3 +256,13 @@ Task: T-025
 Commit: 0654a25
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-026] Alimenter le template Ultimate Hub avec des donnees backend de bout en bout
+
+Context: Le template final introduit de nombreuses zones dynamiques (dashboard avance, concepts, volume, activite) absentes des endpoints existants.
+Decision: Ajouter un endpoint `/api/dashboard` derivant les KPIs depuis la metadata (documents/chunks/fichiers), puis connecter tout le script du template aux APIs reelles.
+Rationale: Eliminer toutes les donnees simulees sans supprimer les blocs visuels du template.
+Task: T-026
+Commit: pending
+Impact: medium, localized
+Date: 2026-02-21
