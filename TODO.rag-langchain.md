@@ -36,4 +36,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Done
-- [x] [T-000] initialize rag feature state and execution artifacts | commit: pending
+- [x] [T-000] initialize rag feature state and execution artifacts | commit: 8d6e461

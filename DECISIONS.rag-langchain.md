@@ -1,4 +1,4 @@
-# DECISIONS — <feature-name>
+# DECISIONS — RAG LangChain Service
 
 ## Rules
 - Log only non-trivial decisions.
@@ -7,12 +7,12 @@
 
 ## Decision Log
 
-### [D-001] <title>
+### [D-001] Add isolated `rag` package instead of rewriting `searchctl`
 
-Context: <constraint>
-Decision: <choice>
-Rationale: <why>
+Context: The repository already contains a working `searchctl` implementation with existing users and tests.
+Decision: Implement NLSpec RAG as a new additive package under `src/rag` and keep existing `searchctl` untouched.
+Rationale: Satisfies the new spec while minimizing blast radius and avoiding feature regression.
 Task: T-001
-Commit: abc1234
-Impact: <low|medium|high>, <localized|module|cross-system>
-Date: YYYY-MM-DD
+Commit: pending
+Impact: medium, module
+Date: 2026-02-22
