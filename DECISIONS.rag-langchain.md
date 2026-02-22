@@ -33,6 +33,6 @@ Context: The spec lists optional API server and alternative vector backends, but
 Decision: Expose API route wiring and backend enum contract, while implementing baseline Chroma path and explicit `NotImplementedError` for alternatives.
 Rationale: Meets contract and keeps minimal-change implementation deterministic.
 Task: T-003
-Commit: pending
+Commit: c69101e
 Impact: low, localized
 Date: 2026-02-22
