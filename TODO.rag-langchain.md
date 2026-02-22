@@ -39,3 +39,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-001] implement rag package core modules and cli according to rag.nlspec | commit: d22b3c9
 - [x] [T-002] add deterministic fixtures and tests for ingestion retrieval generation | commit: 57bf56a
 - [x] [T-003] wire packaging env scripts and docs for rag quickstart | commit: c69101e
+- [x] [T-004] add low-relevance retrieval guard to return unknown when query has no lexical support | commit: pending

@@ -34,3 +34,16 @@ def test_retrieval_returns_relevant_chunk(tmp_path: Path, monkeypatch) -> None:
     assert docs
     assert any("chroma" in str(d.metadata.get("source", "")).lower() for d in docs)
     assert debug["retrieved"]
+
+
+def test_retrieval_filters_unrelated_query(tmp_path: Path, monkeypatch) -> None:
+    _set_test_env(monkeypatch, tmp_path)
+    raw = tmp_path / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    (raw / "notes.md").write_text("This corpus discusses gardens and flowers only.", encoding="utf-8")
+
+    cfg = RagConfig.from_env()
+    ingest_path(cfg, path=str(raw))
+
+    docs, _ = retrieve_documents(cfg, "What is Chroma?")
+    assert docs == []

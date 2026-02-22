@@ -36,3 +36,13 @@ Task: T-003
 Commit: c69101e
 Impact: low, localized
 Date: 2026-02-22
+
+### [D-004] Apply lexical support guard before generation
+
+Context: Vector retrieval could return unrelated top-k chunks when the corpus does not contain the query concept (for example, "Chroma"), causing misleading grounded answers.
+Decision: Add a retrieval-time lexical support filter on query terms; if no retrieved chunk contains query evidence, return an empty context so generation falls back to explicit unknown.
+Rationale: Enforces hallucination control from the NLSpec while preserving current architecture.
+Task: T-004
+Commit: pending
+Impact: low, localized
+Date: 2026-02-22

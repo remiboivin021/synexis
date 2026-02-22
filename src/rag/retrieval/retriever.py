@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from langchain_core.documents import Document
 
@@ -50,6 +51,13 @@ def retrieve_documents(
     docs = [doc for doc, _ in docs_with_scores]
     scores = [float(score) for _, score in docs_with_scores]
 
+    # Guardrail: if none of the retrieved chunks contains lexical evidence
+    # for the query terms, treat retrieval as low-confidence and return empty.
+    query_terms = _query_terms(question)
+    if query_terms:
+        docs = [doc for doc in docs if _has_lexical_support(doc, query_terms)]
+        scores = scores[: len(docs)]
+
     if config.enable_rerank:
         docs = rerank_documents(docs, question, top_n=config.rerank_top_n)
 
@@ -82,3 +90,36 @@ def _build_filter(filters: dict) -> dict | None:
     allowed = {"tenant_id", "doc_id", "source"}
     clean = {k: v for k, v in (filters or {}).items() if k in allowed and v is not None}
     return clean or None
+
+
+def _query_terms(text: str) -> list[str]:
+    tokens = re.findall(r"[a-zA-Z0-9_]+", text.lower())
+    stop = {
+        "what",
+        "which",
+        "who",
+        "where",
+        "when",
+        "why",
+        "how",
+        "is",
+        "are",
+        "the",
+        "a",
+        "an",
+        "for",
+        "to",
+        "of",
+        "in",
+        "on",
+        "with",
+    }
+    return [t for t in tokens if len(t) >= 4 and t not in stop]
+
+
+def _has_lexical_support(doc: Document, query_terms: list[str]) -> bool:
+    source = str(doc.metadata.get("source") or "").lower()
+    title = str(doc.metadata.get("title") or "").lower()
+    text = str(doc.page_content or "").lower()
+    haystack = " ".join([source, title, text])
+    return any(term in haystack for term in query_terms)
