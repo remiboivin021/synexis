@@ -24,6 +24,8 @@ class RagConfig:
     context_max_chars: int
     rewrite_model: str
     low_confidence_score: float
+    query_stopwords: set[str]
+    query_min_term_len: int
 
     @classmethod
     def from_env(cls) -> "RagConfig":
@@ -45,6 +47,13 @@ class RagConfig:
             context_max_chars=int(os.getenv("RAG_CONTEXT_MAX_CHARS", "18000")),
             rewrite_model=os.getenv("RAG_REWRITE_MODEL", "gpt-4.1-mini"),
             low_confidence_score=float(os.getenv("RAG_LOW_CONFIDENCE_SCORE", "0.0")),
+            query_stopwords=_parse_csv_set(
+                os.getenv(
+                    "RAG_QUERY_STOPWORDS",
+                    "what,which,who,where,when,why,how,is,are,the,a,an,for,to,of,in,on,with",
+                )
+            ),
+            query_min_term_len=int(os.getenv("RAG_QUERY_MIN_TERM_LEN", "4")),
         )
 
     @property
@@ -62,7 +71,13 @@ class RagConfig:
             raise ValueError("RAG_CHUNK_SIZE must be > 0")
         if self.retrieval_k <= 0 or self.fetch_k <= 0:
             raise ValueError("RAG_RETRIEVAL_K and RAG_FETCH_K must be > 0")
+        if self.query_min_term_len < 1:
+            raise ValueError("RAG_QUERY_MIN_TERM_LEN must be >= 1")
 
 
 def _is_true(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _parse_csv_set(value: str) -> set[str]:
+    return {item.strip().lower() for item in value.split(",") if item.strip()}

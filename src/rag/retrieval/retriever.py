@@ -53,7 +53,11 @@ def retrieve_documents(
 
     # Guardrail: if none of the retrieved chunks contains lexical evidence
     # for the query terms, treat retrieval as low-confidence and return empty.
-    query_terms = _query_terms(question)
+    query_terms = _query_terms(
+        question,
+        stopwords=config.query_stopwords,
+        min_term_len=config.query_min_term_len,
+    )
     if query_terms:
         docs = [doc for doc in docs if _has_lexical_support(doc, query_terms)]
         scores = scores[: len(docs)]
@@ -92,29 +96,9 @@ def _build_filter(filters: dict) -> dict | None:
     return clean or None
 
 
-def _query_terms(text: str) -> list[str]:
+def _query_terms(text: str, stopwords: set[str], min_term_len: int) -> list[str]:
     tokens = re.findall(r"[a-zA-Z0-9_]+", text.lower())
-    stop = {
-        "what",
-        "which",
-        "who",
-        "where",
-        "when",
-        "why",
-        "how",
-        "is",
-        "are",
-        "the",
-        "a",
-        "an",
-        "for",
-        "to",
-        "of",
-        "in",
-        "on",
-        "with",
-    }
-    return [t for t in tokens if len(t) >= 4 and t not in stop]
+    return [t for t in tokens if len(t) >= min_term_len and t not in stopwords]
 
 
 def _has_lexical_support(doc: Document, query_terms: list[str]) -> bool:

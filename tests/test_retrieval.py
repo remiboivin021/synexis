@@ -47,3 +47,18 @@ def test_retrieval_filters_unrelated_query(tmp_path: Path, monkeypatch) -> None:
 
     docs, _ = retrieve_documents(cfg, "What is Chroma?")
     assert docs == []
+
+
+def test_retrieval_stopwords_are_configurable_for_multilingual_queries(tmp_path: Path, monkeypatch) -> None:
+    _set_test_env(monkeypatch, tmp_path)
+    monkeypatch.setenv("RAG_QUERY_MIN_TERM_LEN", "2")
+    monkeypatch.setenv("RAG_QUERY_STOPWORDS", "que,es,la,the,is,what")
+    raw = tmp_path / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    (raw / "notes.md").write_text("es un documento general sin termino objetivo", encoding="utf-8")
+
+    cfg = RagConfig.from_env()
+    ingest_path(cfg, path=str(raw))
+
+    docs, _ = retrieve_documents(cfg, "que es chroma")
+    assert docs == []

@@ -46,3 +46,13 @@ Task: T-004
 Commit: 0de6b92
 Impact: low, localized
 Date: 2026-02-22
+
+### [D-005] Make lexical guard stopwords configurable via env
+
+Context: Multilingual queries (French/English/Spanish) require different stopword sets and token-length heuristics.
+Decision: Add `RAG_QUERY_STOPWORDS` and `RAG_QUERY_MIN_TERM_LEN` to `RagConfig` and use them in retrieval lexical filtering.
+Rationale: Keeps the hallucination guard active while adapting relevance behavior to language context.
+Task: T-005
+Commit: pending
+Impact: low, localized
+Date: 2026-02-22

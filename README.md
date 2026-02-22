@@ -150,3 +150,7 @@ The RAG output contract is:
 - `answer`
 - `citations` (`source`, `doc_id`, `chunk_id`, `excerpt`)
 - `debug` (`retrieval`, `timing_ms`, `prompt_tokens`)
+
+Query relevance guard can be tuned for multilingual usage:
+- `RAG_QUERY_STOPWORDS` (comma-separated)
+- `RAG_QUERY_MIN_TERM_LEN` (default `4`)
