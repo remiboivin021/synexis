@@ -246,3 +246,13 @@ Task: T-024
 Commit: 6586386
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-025] Corriger l'inference de vault pour prendre le segment enfant du root
+
+Context: Avec un root parent (`.../vaults`), l'UI affichait `vaults`/`docs` au lieu des vrais vaults (`Freelance`, `Engineering`).
+Decision: Deriver le vault depuis le premier segment relatif sous le root correspondant, avec matching sur le root le plus specifique.
+Rationale: Obtenir des noms de vault exacts sans heuristique fragile.
+Task: T-025
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

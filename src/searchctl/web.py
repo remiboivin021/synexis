@@ -110,26 +110,47 @@ def _is_under_roots(path: Path, roots: list[str]) -> bool:
     return False
 
 
-def _vault_entries(roots: list[str]) -> list[dict[str, str]]:
-    entries: list[dict[str, str]] = []
+def _normalize_fs_path(raw: str) -> str:
+    return raw.replace("\\", "/").rstrip("/").strip()
+
+
+def _vault_name_for_path(doc_path: str, roots: list[str]) -> str:
+    normalized_doc = _normalize_fs_path(doc_path)
+    if not normalized_doc:
+        return "Global"
+    lower_doc = normalized_doc.lower()
+    matches = sorted((_normalize_fs_path(root) for root in roots if root), key=len, reverse=True)
+    for root in matches:
+        root_lower = root.lower()
+        if lower_doc == root_lower:
+            base = Path(root).name.strip()
+            return base or "Global"
+        prefix = root_lower + "/"
+        if lower_doc.startswith(prefix):
+            remainder = normalized_doc[len(root) :].lstrip("/")
+            first_segment = remainder.split("/", 1)[0].strip()
+            if first_segment:
+                return first_segment
+            base = Path(root).name.strip()
+            return base or "Global"
+    return "Global"
+
+
+def _vault_entries(roots: list[str], doc_paths: list[str]) -> list[dict[str, str]]:
+    names = sorted({name for name in (_vault_name_for_path(path, roots) for path in doc_paths) if name and name != "Global"})
+    if names:
+        return [{"name": name} for name in names]
+
+    # Fallback when metadata DB is empty: expose configured roots.
+    fallback: list[dict[str, str]] = []
     seen: dict[str, int] = {}
     for i, root in enumerate(roots, start=1):
-        root_path = Path(root).resolve()
-        base_name = root_path.name.strip() or f"vault-{i}"
+        base_name = Path(_normalize_fs_path(root)).name.strip() or f"vault-{i}"
         count = seen.get(base_name, 0)
         seen[base_name] = count + 1
         name = base_name if count == 0 else f"{base_name}-{count + 1}"
-        entries.append({"name": name, "path": str(root_path)})
-    return entries
-
-
-def _vault_name_for_path(doc_path: str, vaults: list[dict[str, str]]) -> str:
-    resolved = Path(doc_path).resolve()
-    for vault in vaults:
-        root_path = Path(vault["path"]).resolve()
-        if resolved == root_path or root_path in resolved.parents:
-            return vault["name"]
-    return "Global"
+        fallback.append({"name": name})
+    return fallback
 
 
 def _read_doc_content(doc: dict[str, Any], cfg: AppConfig) -> str:
@@ -338,7 +359,6 @@ def _search_rows(
 
 def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
     cfg = load_config(config_path)
-    vaults = _vault_entries(cfg.roots)
     assets_dir = _assets_dir()
     app = FastAPI(title="searchctl-web", docs_url=None, redoc_url=None)
     app.state.cfg = cfg
@@ -354,7 +374,11 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
 
     @app.get("/api/vaults")
     async def list_vaults() -> Any:
-        return {"vaults": vaults}
+        db = MetadataDB(cfg.metadata.sqlite_path)
+        db.init_schema()
+        docs = db.list_documents()
+        doc_paths = [str(row["path"]) for row in docs]
+        return {"vaults": _vault_entries(cfg.roots, doc_paths)}
 
     @app.get("/api/documents")
     async def list_documents() -> Any:
@@ -368,7 +392,7 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
                 "source_type": row["source_type"],
                 "status": row["status"],
                 "updated_at": row["updated_at"],
-                "vault": _vault_name_for_path(str(row["path"]), vaults),
+                "vault": _vault_name_for_path(str(row["path"]), cfg.roots),
             }
             for row in db.list_documents()
         ]
@@ -395,7 +419,7 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
             "path": doc["path"],
             "title": doc["title"],
             "source_type": doc["source_type"],
-            "vault": _vault_name_for_path(str(doc["path"]), vaults),
+            "vault": _vault_name_for_path(str(doc["path"]), cfg.roots),
             "content": content,
             "rendered_html": render_markdown_safe(content) if doc["source_type"] == "markdown" else None,
         }
