@@ -23,6 +23,16 @@ Context: Importing `langchain_core.output_parsers` caused a segmentation fault v
 Decision: Keep LCEL composition but implement generation flow with `RunnablePassthrough` + `RunnableLambda` only.
 Rationale: Preserves spec compliance and chain composability while keeping runtime stable.
 Task: T-002
+Commit: 57bf56a
+Impact: low, localized
+Date: 2026-02-22
+
+### [D-003] Keep optional API and backend alternatives behind explicit contracts
+
+Context: The spec lists optional API server and alternative vector backends, but full production connectors increase blast radius.
+Decision: Expose API route wiring and backend enum contract, while implementing baseline Chroma path and explicit `NotImplementedError` for alternatives.
+Rationale: Meets contract and keeps minimal-change implementation deterministic.
+Task: T-003
 Commit: pending
 Impact: low, localized
 Date: 2026-02-22

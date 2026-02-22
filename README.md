@@ -116,3 +116,37 @@ By default summarize mode uses BM25-only retrieval to avoid heavy embedding runt
   - Install build backend dependencies in the active venv:
   - `pip install -U setuptools wheel`
   - Re-run: `pip install -e . --no-build-isolation`
+
+## RAG LangChain Quickstart
+
+This repository now also includes an additive `rag` package implementing `rag.nlspec.md`.
+
+1. Configure environment:
+```bash
+cp .env.example .env
+# set OPENAI_API_KEY if using OpenAI models
+```
+
+2. Ingest local docs:
+```bash
+python -m rag.cli ingest --path ./data/raw
+# or
+./scripts/ingest.sh ./data/raw
+```
+
+3. Query with citations and debug:
+```bash
+python -m rag.cli query --question "What does this repo do?" --debug 1
+# or
+./scripts/query.sh "What does this repo do?"
+```
+
+4. Optional API server:
+```bash
+python -m rag.cli serve --host 127.0.0.1 --port 8090
+```
+
+The RAG output contract is:
+- `answer`
+- `citations` (`source`, `doc_id`, `chunk_id`, `excerpt`)
+- `debug` (`retrieval`, `timing_ms`, `prompt_tokens`)
