@@ -236,3 +236,13 @@ Task: T-023
 Commit: d96f48b
 Impact: low, localized
 Date: 2026-02-21
+
+### [D-024] Generer dynamiquement les onglets vault depuis la configuration
+
+Context: Les onglets vault etaient statiques (Travail/Personnel) et ne suivaient pas les vaults reels configures.
+Decision: Exposer `/api/vaults` depuis `config.roots`, attacher chaque document a son vault cote backend, puis construire les onglets dynamiquement cote UI.
+Rationale: Synchroniser l'interface avec les vrais vaults sans maintenance manuelle.
+Task: T-024
+Commit: pending
+Impact: low, localized
+Date: 2026-02-21

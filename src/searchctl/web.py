@@ -110,6 +110,28 @@ def _is_under_roots(path: Path, roots: list[str]) -> bool:
     return False
 
 
+def _vault_entries(roots: list[str]) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    seen: dict[str, int] = {}
+    for i, root in enumerate(roots, start=1):
+        root_path = Path(root).resolve()
+        base_name = root_path.name.strip() or f"vault-{i}"
+        count = seen.get(base_name, 0)
+        seen[base_name] = count + 1
+        name = base_name if count == 0 else f"{base_name}-{count + 1}"
+        entries.append({"name": name, "path": str(root_path)})
+    return entries
+
+
+def _vault_name_for_path(doc_path: str, vaults: list[dict[str, str]]) -> str:
+    resolved = Path(doc_path).resolve()
+    for vault in vaults:
+        root_path = Path(vault["path"]).resolve()
+        if resolved == root_path or root_path in resolved.parents:
+            return vault["name"]
+    return "Global"
+
+
 def _read_doc_content(doc: dict[str, Any], cfg: AppConfig) -> str:
     source_type = str(doc.get("source_type") or "")
     doc_id = str(doc.get("doc_id") or "")
@@ -316,6 +338,7 @@ def _search_rows(
 
 def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
     cfg = load_config(config_path)
+    vaults = _vault_entries(cfg.roots)
     assets_dir = _assets_dir()
     app = FastAPI(title="searchctl-web", docs_url=None, redoc_url=None)
     app.state.cfg = cfg
@@ -329,6 +352,10 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
     async def web_index() -> Any:
         return FileResponse(assets_dir / "index.html")
 
+    @app.get("/api/vaults")
+    async def list_vaults() -> Any:
+        return {"vaults": vaults}
+
     @app.get("/api/documents")
     async def list_documents() -> Any:
         db = MetadataDB(cfg.metadata.sqlite_path)
@@ -341,6 +368,7 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
                 "source_type": row["source_type"],
                 "status": row["status"],
                 "updated_at": row["updated_at"],
+                "vault": _vault_name_for_path(str(row["path"]), vaults),
             }
             for row in db.list_documents()
         ]
@@ -367,6 +395,7 @@ def create_app(config_path: str, use_hybrid_default: bool = False) -> Any:
             "path": doc["path"],
             "title": doc["title"],
             "source_type": doc["source_type"],
+            "vault": _vault_name_for_path(str(doc["path"]), vaults),
             "content": content,
             "rendered_html": render_markdown_safe(content) if doc["source_type"] == "markdown" else None,
         }

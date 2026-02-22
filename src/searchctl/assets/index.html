@@ -112,10 +112,8 @@
 
             <div class="w-full max-w-3xl mt-12 mb-16">
                 <div class="flex justify-center mb-6">
-                    <div class="bg-slate-800/80 p-1 rounded-xl flex gap-1 border border-slate-700">
+                    <div id="vault-tabs" class="bg-slate-800/80 p-1 rounded-xl flex gap-1 border border-slate-700">
                         <button onclick="selectVault('Global')" class="vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white" id="v-Global">Global</button>
-                        <button onclick="selectVault('Travail')" class="vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white" id="v-Travail">Travail</button>
-                        <button onclick="selectVault('Personnel')" class="vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white" id="v-Personnel">Personnel</button>
                     </div>
                 </div>
 
@@ -156,6 +154,7 @@
     <script>
         let selectedVault = 'Global';
         let documents = [];
+        let vaults = ['Global'];
 
         async function api(path, payload) {
             const opts = payload
@@ -228,12 +227,38 @@
             }, 4200);
         }
 
-        function inferVault(doc) {
-            const path = String(doc.path || '').toLowerCase();
-            const title = String(doc.title || '').toLowerCase();
-            if (path.includes('travail') || title.includes('travail') || path.includes('work')) return 'Travail';
-            if (path.includes('personnel') || title.includes('personnel') || path.includes('personal')) return 'Personnel';
-            return 'Global';
+        function vaultButtonId(vault) {
+            return `v-${String(vault).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+        }
+
+        function renderVaultTabs() {
+            const tabs = byId('vault-tabs');
+            if (!tabs) return;
+            tabs.innerHTML = '';
+            for (const vault of vaults) {
+                const btn = document.createElement('button');
+                btn.className = 'vault-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+                btn.id = vaultButtonId(vault);
+                btn.textContent = vault;
+                btn.onclick = () => selectVault(vault);
+                tabs.appendChild(btn);
+            }
+            if (!vaults.includes(selectedVault)) selectedVault = 'Global';
+            selectVault(selectedVault);
+        }
+
+        async function loadVaults() {
+            try {
+                const out = await api('/api/vaults');
+                const names = (out.vaults || [])
+                    .map((v) => String(v.name || '').trim())
+                    .filter(Boolean);
+                vaults = ['Global', ...names.filter((name, idx, arr) => arr.indexOf(name) === idx && name !== 'Global')];
+            } catch (err) {
+                vaults = ['Global'];
+                showErrorToast(formatErrorMessage(err));
+            }
+            renderVaultTabs();
         }
 
         function sourceTypeLabel(sourceType) {
@@ -338,7 +363,13 @@
         async function loadDocuments() {
             try {
                 const out = await api('/api/documents');
-                documents = (out.documents || []).map((doc) => ({ ...doc, vault: inferVault(doc) }));
+                documents = (out.documents || []).map((doc) => ({ ...doc, vault: String(doc.vault || 'Global') }));
+                const dynamicFromDocs = [...new Set(documents.map((d) => d.vault).filter((v) => v && v !== 'Global'))];
+                const currentNoGlobal = vaults.filter((v) => v !== 'Global');
+                if (!currentNoGlobal.length && dynamicFromDocs.length) {
+                    vaults = ['Global', ...dynamicFromDocs];
+                    renderVaultTabs();
+                }
                 renderDocumentList();
                 updateDashboard();
             } catch (err) {
@@ -378,7 +409,8 @@
                 btn.classList.remove('bg-indigo-600', 'text-white');
                 btn.classList.add('text-slate-400');
             });
-            byId(`v-${vault}`).classList.add('bg-indigo-600', 'text-white');
+            const activeBtn = byId(vaultButtonId(vault));
+            if (activeBtn) activeBtn.classList.add('bg-indigo-600', 'text-white');
             byId('current-vault-name').innerText = vault;
             byId('synthesis-vault-tag').innerText = vault;
             renderDocumentList();
@@ -439,6 +471,14 @@
             return byTitle ? byTitle.doc_id : null;
         }
 
+        function resolveSourceVault(source) {
+            const byPath = documents.find((d) => d.path && source.doc_path && d.path === source.doc_path);
+            if (byPath) return byPath.vault || 'Global';
+            const byTitle = documents.find((d) => d.title && source.doc_title && d.title === source.doc_title);
+            if (byTitle) return byTitle.vault || 'Global';
+            return 'Global';
+        }
+
         function renderSources(sources) {
             const grid = byId('sources-grid');
             grid.innerHTML = '';
@@ -446,10 +486,7 @@
 
             const scoped = (selectedVault === 'Global')
                 ? sources
-                : sources.filter((s) => {
-                    const hay = `${s.doc_path || ''} ${s.doc_title || ''}`.toLowerCase();
-                    return hay.includes(selectedVault.toLowerCase());
-                });
+                : sources.filter((s) => resolveSourceVault(s) === selectedVault);
 
             const items = (scoped.length ? scoped : sources).slice(0, 8);
             if (!items.length) {
@@ -528,7 +565,7 @@
             setTimeout(() => byId('panel-overlay').classList.add('hidden'), 500);
         }
 
-        function init() {
+        async function init() {
             byId('search-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') runSearch();
             });
@@ -538,8 +575,8 @@
 
             switchView('search');
             switchDashboardTab('db-general');
-            selectVault('Global');
-            loadDocuments();
+            await loadVaults();
+            await loadDocuments();
         }
 
         init();
