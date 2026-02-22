@@ -62,4 +62,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-024] build vault tabs dynamically from configured vault roots and bind filtering | commit: 6586386
 - [x] [T-025] fix vault name inference to use first child under root (freelance/engineering) | commit: 0654a25
 - [x] [T-026] integrate ultimate hub template with real backend data and add dashboard api metrics | commit: 240b099
-- [x] [T-027] make word cloud weight-driven and add activity tabs (30d calendar, 7d, 24h) | commit: pending
+- [x] [T-027] make word cloud weight-driven and add activity tabs (30d calendar, 7d, 24h) | commit: 068d56a

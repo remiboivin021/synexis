@@ -273,6 +273,6 @@ Context: Le style du nuage de mots et l'activité 30j en courbe ne répondaient 
 Decision: Utiliser `weight/count` backend pour hiérarchiser la typographie des concepts, et afficher l'activité en calendrier 30j + onglets 7j et 24h.
 Rationale: Donner une lecture réelle de la densité des concepts et une vue temporelle plus exploitable.
 Task: T-027
-Commit: pending
+Commit: 068d56a
 Impact: low, localized
 Date: 2026-02-21
