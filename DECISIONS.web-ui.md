@@ -253,6 +253,6 @@ Context: Avec un root parent (`.../vaults`), l'UI affichait `vaults`/`docs` au l
 Decision: Deriver le vault depuis le premier segment relatif sous le root correspondant, avec matching sur le root le plus specifique.
 Rationale: Obtenir des noms de vault exacts sans heuristique fragile.
 Task: T-025
-Commit: pending
+Commit: 0654a25
 Impact: low, localized
 Date: 2026-02-21
