@@ -53,6 +53,6 @@ Context: Multilingual queries (French/English/Spanish) require different stopwor
 Decision: Add `RAG_QUERY_STOPWORDS` and `RAG_QUERY_MIN_TERM_LEN` to `RagConfig` and use them in retrieval lexical filtering.
 Rationale: Keeps the hallucination guard active while adapting relevance behavior to language context.
 Task: T-005
-Commit: pending
+Commit: 94b02e9
 Impact: low, localized
 Date: 2026-02-22

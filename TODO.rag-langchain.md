@@ -20,7 +20,7 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 ---
 
 # Current Task
-- [ ] [T-005] make query stopwords and lexical term length configurable for multilingual usage
+- [ ] (none)
 
 ---
 
@@ -40,3 +40,4 @@ Constitutional ref: `.agents/_constitution.md § 3, § 4`
 - [x] [T-002] add deterministic fixtures and tests for ingestion retrieval generation | commit: 57bf56a
 - [x] [T-003] wire packaging env scripts and docs for rag quickstart | commit: c69101e
 - [x] [T-004] add low-relevance retrieval guard to return unknown when query has no lexical support | commit: 0de6b92
+- [x] [T-005] make query stopwords and lexical term length configurable for multilingual usage | commit: 94b02e9
