@@ -1,0 +1,45 @@
+services:
+  - type: pserv
+    name: opensearch
+    runtime: docker
+    plan: free
+    docker:
+      image: opensearchproject/opensearch:2.14.0
+    envVars:
+      - key: discovery.type
+        value: single-node
+      - key: plugins.security.disabled
+        value: "true"
+      - key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+        sync: false
+      - key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+        value: Sx9!pL2#vQ7@kR4%
+      - key: OPENSEARCH_JAVA_OPTS
+        value: -Xms512m -Xmx512m
+    ports:
+      - port: 9200
+        protocol: tcp
+
+  - type: pserv
+    name: qdrant
+    runtime: docker
+    plan: free
+    docker:
+      image: qdrant/qdrant:v1.12.5
+    ports:
+      - port: 6333
+        protocol: tcp
+  
+  - type: web
+    name: synexis_brain
+    runtime: docker
+    plan: free
+
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    autoDeploy: true
+
+    envVars:
+      - key: PORT
+        value: "10000"

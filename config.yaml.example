@@ -55,3 +55,4 @@ llm:
   base_url: "https://openrouter.ai/api/v1"
   model: "openrouter/auto"
   api_key: "" # or set OPENROUTER_API_KEY
+  strict_grounding: true

@@ -15,13 +15,6 @@ dependencies = [
   "python-dotenv>=1.0",
   "fastapi>=0.115,<1",
   "uvicorn>=0.30,<1",
-  "langchain>=0.3,<0.4",
-  "langchain-core>=0.3,<0.4",
-  "langchain-community>=0.3,<0.4",
-  "langchain-openai>=0.3,<0.4",
-  "langchain-chroma>=0.2,<0.3",
-  "langchain-text-splitters>=0.3,<0.4",
-  "chromadb>=0.5,<1",
   "opensearch-py>=2.4",
   "qdrant-client>=1.9",
   "numpy>=1.26",
@@ -35,6 +28,15 @@ dev = [
 ]
 local-embeddings = [
   "sentence-transformers>=2.7",
+]
+rag = [
+  "langchain>=0.3,<0.4",
+  "langchain-core>=0.3,<0.4",
+  "langchain-community>=0.3,<0.4",
+  "langchain-openai>=0.3,<0.4",
+  "langchain-chroma>=0.2,<0.3",
+  "langchain-text-splitters>=0.3,<0.4",
+  "chromadb>=0.5,<1",
 ]
 
 [project.scripts]
