@@ -1,4 +1,13 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "10000:10000"
+    volumes:
+      - synexis_venv:/home/synexis/.venv
+
   opensearch:
     image: opensearchproject/opensearch:2.14.0
     environment:
@@ -19,5 +28,6 @@ services:
       - qdrant_data:/qdrant/storage
 
 volumes:
+  synexis_venv:
   opensearch_data:
   qdrant_data:
