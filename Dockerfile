@@ -34,6 +34,6 @@ RUN uv venv --python 3.14 --seed "$VIRTUAL_ENV" && \
 
 RUN mkdir -p /home/synexis/data/extracted_text
 
-EXPOSE 10000
+EXPOSE 8080
 RUN chmod +x /home/synexis/start-web.sh
 CMD ["/home/synexis/start-web.sh"]

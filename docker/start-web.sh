@@ -26,4 +26,4 @@ if [ "$NEEDS_REBUILD" -eq 1 ] || [ ! -x "$VENV_PATH/bin/searchctl" ]; then
     "$VENV_PATH/bin/pip" install .
 fi
 
-exec "$VENV_PATH/bin/python" -m searchctl.cli web --config config.yaml --host 0.0.0.0 --port 10000 --allow-remote
+exec "$VENV_PATH/bin/python" -m searchctl.cli web --config config.yaml --host 0.0.0.0 --port 8080 --allow-remote
