@@ -55,8 +55,9 @@ class MetadataConfig(BaseModel):
 class LLMConfig(BaseModel):
     provider: Literal["openrouter"] = "openrouter"
     base_url: str = "https://openrouter.ai/api/v1"
-    model: str = "openrouter/auto"
+    model: str = "openrouter/free"
     api_key: str = ""
+    strict_grounding: bool = True
 
 
 class AppConfig(BaseModel):

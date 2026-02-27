@@ -11,7 +11,15 @@ SUMMARY_SYSTEM_PROMPT = (
 )
 
 
-def build_summary_user_prompt(query: str, results: list[dict[str, Any]]) -> str:
+def build_summary_user_prompt(query: str, results: list[dict[str, Any]], strict_grounding: bool = False) -> str:
+    source_policy = (
+        "Chaque affirmation factuelle doit inclure une citation inline au format [Sx] "
+        "en utilisant exclusivement les source_id fournis. "
+        "Si les extraits ne suffisent pas, reponds uniquement: "
+        "\"Information insuffisante dans les sources fournies.\""
+        if strict_grounding
+        else "Ne pas citer de source inline. Les sources seront ajoutees apres la synthese."
+    )
     payload = {
         "query": query,
         "results": results,
@@ -22,7 +30,7 @@ def build_summary_user_prompt(query: str, results: list[dict[str, Any]]) -> str:
                 "Points cles",
                 "Actions recommandees",
             ],
-            "source_policy": "Ne pas citer de source inline. Les sources seront ajoutees apres la synthese.",
+            "source_policy": source_policy,
         },
     }
     return (

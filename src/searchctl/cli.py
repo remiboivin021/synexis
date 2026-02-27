@@ -32,7 +32,7 @@ from searchctl.qdrant.collections import delete_doc_vectors, ensure_collection, 
 from searchctl.qdrant.queries import vector_search
 from searchctl.prompts import build_summary_user_prompt
 from searchctl.snippets import build_snippet
-from searchctl.summary import collect_sources, format_sources, summary_input_rows
+from searchctl.summary import collect_sources, format_sources, is_strictly_grounded_summary, summary_input_rows
 
 app = typer.Typer(help="Local personal search CLI")
 LOG = logging.getLogger("searchctl")
@@ -93,14 +93,20 @@ def _format_search_results(query: str, rows: list[dict]) -> str:
 
 def _summarize_with_openrouter(query: str, rows: list[dict[str, Any]], cfg: AppConfig, top_n: int) -> str:
     summary_input = summary_input_rows(rows, top_n)
-    prompt = build_summary_user_prompt(query, summary_input)
+    prompt = build_summary_user_prompt(query, summary_input, strict_grounding=cfg.llm.strict_grounding)
     llm_cfg = OpenRouterConfig(
         base_url=cfg.llm.base_url,
         model=cfg.llm.model,
         api_key=cfg.llm.api_key,
         app_name="searchctl",
     )
-    return call_openrouter_summary(llm_cfg, prompt)
+    summary = call_openrouter_summary(llm_cfg, prompt)
+    if not cfg.llm.strict_grounding:
+        return summary
+    allowed_source_ids = [str(row.get("source_id") or "") for row in summary_input if row.get("source_id")]
+    if is_strictly_grounded_summary(summary, allowed_source_ids):
+        return summary
+    return "Information insuffisante dans les sources fournies."
 
 
 def _normalize_text(text: str) -> str:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -39,9 +40,10 @@ def format_sources(sources: list[dict[str, Any]]) -> str:
 
 def summary_input_rows(rows: list[dict[str, Any]], top_n: int) -> list[dict[str, Any]]:
     out = []
-    for row in rows[:top_n]:
+    for i, row in enumerate(rows[:top_n], start=1):
         out.append(
             {
+                "source_id": f"S{i}",
                 "rank": row.get("rank"),
                 "doc_title": row.get("doc_title"),
                 "doc_path": row.get("doc_path"),
@@ -50,3 +52,15 @@ def summary_input_rows(rows: list[dict[str, Any]], top_n: int) -> list[dict[str,
             }
         )
     return out
+
+
+def is_strictly_grounded_summary(summary: str, allowed_source_ids: list[str]) -> bool:
+    if not summary.strip():
+        return False
+    if not allowed_source_ids:
+        return False
+    cited = set(re.findall(r"\[(S\d+)\]", summary))
+    if not cited:
+        return False
+    allowed = set(allowed_source_ids)
+    return cited.issubset(allowed)

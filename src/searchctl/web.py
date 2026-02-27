@@ -25,7 +25,7 @@ from searchctl.prompts import build_summary_user_prompt
 from searchctl.qdrant.client import make_client as make_qdrant_client
 from searchctl.qdrant.queries import vector_search
 from searchctl.snippets import build_snippet
-from searchctl.summary import collect_sources, summary_input_rows
+from searchctl.summary import collect_sources, is_strictly_grounded_summary, summary_input_rows
 
 STOPWORDS_FR = {"de", "des", "du", "la", "le", "les", "un", "une", "et", "en", "dans", "sur", "pour", "au", "aux"}
 DEFAULT_HOST = "127.0.0.1"
@@ -93,14 +93,20 @@ def _project_intent_guard(query: str, payload: dict[str, Any]) -> bool:
 
 def _summarize_with_openrouter(query: str, rows: list[dict[str, Any]], cfg: AppConfig, top_n: int) -> str:
     summary_input = summary_input_rows(rows, top_n)
-    prompt = build_summary_user_prompt(query, summary_input)
+    prompt = build_summary_user_prompt(query, summary_input, strict_grounding=cfg.llm.strict_grounding)
     llm_cfg = OpenRouterConfig(
         base_url=cfg.llm.base_url,
         model=cfg.llm.model,
         api_key=cfg.llm.api_key,
         app_name="searchctl-web",
     )
-    return call_openrouter_summary(llm_cfg, prompt)
+    summary = call_openrouter_summary(llm_cfg, prompt)
+    if not cfg.llm.strict_grounding:
+        return summary
+    allowed_source_ids = [str(row.get("source_id") or "") for row in summary_input if row.get("source_id")]
+    if is_strictly_grounded_summary(summary, allowed_source_ids):
+        return summary
+    return "Information insuffisante dans les sources fournies."
 
 
 def _is_under_roots(path: Path, roots: list[str]) -> bool:
